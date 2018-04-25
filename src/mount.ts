@@ -1,9 +1,14 @@
 import { Path } from "./path";
-import { mountMfs } from "./mount-mfs";
-import { mountIpfs } from "./mount-ipfs";
+import { MfsMountable } from "./mount-mfs";
+import { IpfsMountable } from "./mount-ipfs";
 import * as commander from "commander";
 const version = require("../package.json").version;
 
+
+export interface Mountable {
+  mount(root: Path): Promise<void>
+  unmount(root: Path): Promise<void>
+}
 
 class MountOptions {
   mfs?: Path = undefined
@@ -15,15 +20,22 @@ class MountOptions {
   });
 }
 
-async function mount(options: MountOptions) {
+async function mountUntilDone(m: Mountable, root: Path, done: Promise<void>) {
+  await m.mount(root)
+  console.log(`mounted ${root}`)
+  try { await done }
+  finally { await m.unmount(root) }
+}
+
+async function mountAll(options: MountOptions) {
   const mounts = new Array<Promise<void>>()
 
   if (options.mfs) {
-    mounts.push(mountMfs(options.mfs, options.done));
+    mounts.push(mountUntilDone(MfsMountable, options.mfs, options.done));
   }
 
   if (options.ipfs) {
-    mounts.push(mountIpfs(options.ipfs, options.done));
+    mounts.push(mountUntilDone(IpfsMountable, options.ipfs, options.done));
   }
 
   if (mounts.length == 0) {
@@ -41,6 +53,6 @@ const command = commander
 
 const mountOptions = Object.assign(new MountOptions(), command);
 
-mount(mountOptions)
+mountAll(mountOptions)
   .then(() => console.log("done"))
   .catch(console.log);
