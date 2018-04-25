@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "commander": "^2.15.1",
+    "fuse-bindings": "^2.11.2",
     "ipfs-fuse": "^0.3.2"
   }
 }

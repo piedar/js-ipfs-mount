@@ -1,5 +1,6 @@
 import { Path } from "./path";
 import { mountMfs } from "./mount-mfs";
+import { mountIpfs } from "./mount-ipfs";
 import * as commander from "commander";
 const version = require("../package.json").version;
 
@@ -10,7 +11,7 @@ class MountOptions {
   ipns?: Path = undefined
   done: Promise<void> = new Promise((resolve, reject) => {
     process.on("SIGINT", () => resolve());
-    process.on("SIGTERM", () => resolve());
+    //process.on("SIGTERM", () => resolve());
   });
 }
 
@@ -19,6 +20,10 @@ async function mount(options: MountOptions) {
 
   if (options.mfs) {
     mounts.push(mountMfs(options.mfs, options.done));
+  }
+
+  if (options.ipfs) {
+    mounts.push(mountIpfs(options.ipfs, options.done));
   }
 
   if (mounts.length == 0) {
@@ -31,6 +36,7 @@ async function mount(options: MountOptions) {
 const command = commander
   .version(version)
   .option("--mfs [path]", "mount point for mfs (ipfs files)")
+  .option("--ipfs [path]", "mount point for ipfs")
   .parse(process.argv)
 
 const mountOptions = Object.assign(new MountOptions(), command);
