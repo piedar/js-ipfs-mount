@@ -1,0 +1,28 @@
+{
+  "compileOnSave": true,
+
+  "include": [
+  	"src/**/*"
+  ],
+
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": [ "dom", "es2015", "es2015.promise" ],
+
+    "outDir": "./dist",
+    //"declaration": true,
+    //"sourceMap": false,
+
+    "strict": true,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+
+    "preserveConstEnums": true
+  }
+}
