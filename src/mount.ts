@@ -1,47 +1,40 @@
-import * as os from "os";
-import * as path from "path";
-import * as util from "util";
-const FuseMfs = require("ipfs-fuse");
-
-
-function delay(msTime: number): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, msTime)
-  })
-}
-
+import { Path } from "./path";
+import { mountMfs } from "./mount-mfs";
+import * as commander from "commander";
+const version = require("../package.json").version;
 
 
 class MountOptions {
-  mfsRoot?: string = "./mfs"
-  ipfsRoot?: string = undefined
-  ipnsRoot?: string = undefined
+  mfs?: Path = undefined
+  ipfs?: Path = undefined
+  ipns?: Path = undefined
   done: Promise<void> = new Promise((resolve, reject) => {
     process.on("SIGINT", () => resolve());
+    process.on("SIGTERM", () => resolve());
   });
 }
 
-async function mountMfs(options: MountOptions = new MountOptions()) {
-  if (!options.mfsRoot) return;
+async function mount(options: MountOptions) {
+  const mounts = new Array<Promise<void>>()
 
-  const mountAsync = util.promisify(FuseMfs.mount);
-  const unmountAsync = util.promisify(FuseMfs.unmount);
-
-  await mountAsync(options.mfsRoot, {
-    ipfs: { },
-    fuse: { displayFolder: true }
-  })
-
-  console.log(`ready ${options.mfsRoot}`)
-
-  try {
-    await options.done;
+  if (options.mfs) {
+    mounts.push(mountMfs(options.mfs, options.done));
   }
-  finally {
-    await unmountAsync(options.mfsRoot);
+
+  if (mounts.length == 0) {
+    throw new Error("Must specify at least one mount point")
   }
+  await Promise.all(mounts)
 }
 
-mountMfs()
+
+const command = commander
+  .version(version)
+  .option("--mfs [path]", "mount point for mfs (ipfs files)")
+  .parse(process.argv)
+
+const mountOptions = Object.assign(new MountOptions(), command);
+
+mount(mountOptions)
   .then(() => console.log("done"))
   .catch(console.log);
