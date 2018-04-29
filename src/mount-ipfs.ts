@@ -58,20 +58,12 @@ class IpfsMount implements fuse.MountOptions {
     }
 
     const now = new Date(Date.now())
-    const attrBase = {
-      isFile: () => true,
-      isBlockDevice: () => false,
-      isCharacterDevice: () => false,
-      isDirectory: () => false,
-      isFIFO: () => false,
-      isSocket: () => false,
-      isSymbolicLink: () => false,
-
+    let stats = {
       dev: 0,
       ino: 0,
-      //size: 0,
-      //mode: 0,
-      //nlink: 0,
+      size: 0,
+      mode: 0,
+      nlink: 0,
       uid: process.getuid ? process.getuid() : 0,
       gid: process.getgid ? process.getgid() : 0,
       rdev: 0,
@@ -81,12 +73,6 @@ class IpfsMount implements fuse.MountOptions {
       mtime: now,
       atime: now,
       ctime: now,
-      birthtime: now,
-
-      get atimeMs() { return this.atime.getUTCMilliseconds() },
-      get mtimeMs() { return this.mtime.getUTCMilliseconds() },
-      get ctimeMs() { return this.ctime.getUTCMilliseconds() },
-      get birthtimeMs() { return this.birthtime.getUTCMilliseconds() },
     }
 
     const ipfsPath = path === "/" ? path : "/ipfs/" + path
@@ -97,14 +83,14 @@ class IpfsMount implements fuse.MountOptions {
       let [filetype, permissions] =
         ipfsStat.type === "directory" ? [fs.constants.S_IFDIR, 0o111] :
         ipfsStat.type === "file"      ? [fs.constants.S_IFREG, 0o444] :
-        [0, 0o000]
+                                        [0, 0o000]
 
-      const attr: fuse.Stats = Object.assign(attrBase, {
+      stats = Object.assign(stats, {
         size: ipfsStat.size,
         nlink: 1,
         mode: filetype | permissions
       })
-      return reply(0, attr)
+      return reply(0, stats as fuse.Stats)
     })
   }
 }

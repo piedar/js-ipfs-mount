@@ -359,13 +359,13 @@ declare module 'fuse-bindings' {
 	}
 
 	export interface Stats {
-		isFile(): boolean;
-		isDirectory(): boolean;
-		isBlockDevice(): boolean;
-		isCharacterDevice(): boolean;
-		isSymbolicLink(): boolean;
-		isFIFO(): boolean;
-		isSocket(): boolean;
+		//isFile(): boolean;
+		//isDirectory(): boolean;
+		//isBlockDevice(): boolean;
+		//isCharacterDevice(): boolean;
+		//isSymbolicLink(): boolean;
+		//isFIFO(): boolean;
+		//isSocket(): boolean;
 		dev: number;
 		ino: number;
 		mode: number;
@@ -376,14 +376,14 @@ declare module 'fuse-bindings' {
 		size: number;
 		blksize: number;
 		blocks: number;
-		atimeMs: number;
-		mtimeMs: number;
-		ctimeMs: number;
-		birthtimeMs: number;
+		//atimeMs: number;
+		//mtimeMs: number;
+		//ctimeMs: number;
+		//birthtimeMs: number;
 		atime: Date;
 		mtime: Date;
 		ctime: Date;
-		birthtime: Date;
+		//birthtime: Date;
 	}
 
 	function unmount(mountPoint: string, cb: (code: number) => void): void;
