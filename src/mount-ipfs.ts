@@ -3,11 +3,16 @@ import * as fs from "fs"
 import { Path } from "./path"
 import * as fuse from "fuse-bindings"
 import { Mountable } from "./mount"
+import { Readable, Writable } from "readable-stream"
 const IpfsApi = require("ipfs-api")
 
 
 function debug(...rest: any[]) {
   console.log(rest)
+}
+
+function stringify(value: Object): string {
+  return JSON.stringify(value)
 }
 
 
@@ -30,11 +35,74 @@ export class IpfsMountable implements Mountable {
 }
 
 
-function codeFromError(err: any): number {
+function errorToCode(err: any): number {
   return typeof err === "number" ? err :
                 err instanceof Error && err.message === "file does not exist" ? fuse.ENOENT :
                 err instanceof Error && err.message === "path must contain at least one component" ? fuse.EPERM :
                 -1;
+}
+
+
+async function ipfsCat_File(ipfs: typeof IpfsApi, ipfsPath: string, buffer: Buffer, segment: Segment):
+  Promise<CatResult>
+{
+  const file: Buffer = await ipfs.cat(ipfsPath, segment);
+
+  let fileOffset = 0
+  if (file.byteLength !== segment.length) {
+    debug("fixme: ipfs.cat() ignored " + stringify(segment) + " and returned " + stringify({ offset: 0, length: file.byteLength }))
+    fileOffset = segment.offset
+  }
+
+  const bytesCopied = file.copy(buffer, 0, fileOffset, fileOffset + segment.length)
+  return { bytesCopied }
+}
+
+async function ipfsCat_ReadStream(ipfs: typeof IpfsApi, ipfsPath: string, buffer: Buffer, segment: Segment):
+  Promise<CatResult>
+{
+  let position = 0
+  const stream: Readable = ipfs.catReadableStream(ipfsPath, segment);
+
+  if (stream.readableLength !== segment.length) {
+    debug("fixme: ipfs.catReadableStream() ignored " + stringify(segment) + " and returned " + stringify({ offset: 0, length: stream.readableLength }))
+  }
+
+  stream.on("data", chunk => {
+    debug({ chunk, chunkLength: chunk.length, position, capacity: buffer.byteLength })
+
+    if (position >= segment.length) {
+      // Calling stream.destroy() directly causes "Error: write after end".
+      debug("destroying stream")
+      Promise.resolve()
+        .then(() => stream.destroy())
+        .catch(debug)
+      return
+    }
+
+    let bytesWritten: number
+
+    if (typeof chunk === "string") {
+      bytesWritten = buffer.write(chunk, position)
+    }
+    else {
+      bytesWritten = chunk.copy(buffer, position, 0, segment.length - position)
+    }
+
+    debug({ bytesWritten })
+    if (bytesWritten != chunk.length) debug("UH OH")
+
+    position += bytesWritten
+  })
+
+  const streamEnd = () => new Promise((resolve, reject) => {
+    stream.on("end", resolve)
+    stream.on("error", reject)
+  })
+
+  await streamEnd();
+  debug({ length: segment.length, position })
+  return { bytesCopied: position }
 }
 
 
@@ -69,7 +137,7 @@ class IpfsMount implements fuse.MountOptions {
     }
     const bail = (err: any, reason?: any) => {
       debug({ err, reason });
-      reply(codeFromError(err), undefined!)
+      reply(errorToCode(err), undefined!)
     }
 
     const now = new Date(Date.now())
@@ -116,7 +184,7 @@ class IpfsMount implements fuse.MountOptions {
     }
     const bail = (err: any, reason?: any) => {
       debug({ err, reason });
-      reply(codeFromError(err), [])
+      reply(errorToCode(err), [])
     }
 
     // todo: extra slashes cause "Error: path must contain at least one component"
@@ -127,6 +195,39 @@ class IpfsMount implements fuse.MountOptions {
         files.filter(file => file.depth === 1).map(file => file.name)))
       .catch((err: any) => bail(err, "ipfs ls"))
   }
+
+  readonly read = (path: string, fd: number, buffer: Buffer, length: number, offset: number, cb: (bytesReadOrErr: number) => void) => {
+    debug("read " + path, { offset, length })
+
+    const reply = (bytesReadOrError: number) => {
+      debug({ bytesReadOrError });
+      cb(bytesReadOrError)
+    }
+    const bail = (err: any, reason?: any) => {
+      debug({ err, reason });
+      reply(errorToCode(err))
+    }
+
+    if (path === "/") return bail(fuse.EPERM)
+
+    const ipfsPath = path.substring(1)
+
+    let ipfsCat = ipfsCat_File;     // slow but accurate
+    //ipfsCat = ipfsCat_ReadStream; // potentially fast once it works
+
+    ipfsCat(this.ipfs, ipfsPath, buffer, { offset, length })
+      .then(result => reply(result.bytesCopied))
+      .catch(debug)
+  }
+}
+
+type CatResult = {
+  bytesCopied: number
+}
+
+type Segment = {
+  offset: number
+  length: number
 }
 
 type IpfsFileListing = {
