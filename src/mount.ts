@@ -1,9 +1,7 @@
 import { Path } from "./path";
 import { MfsMountable } from "./mount-mfs";
 import { IpfsMountable } from "./mount-ipfs";
-import * as commander from "commander";
 const IpfsApi = require("ipfs-api")
-const version = require("../package.json").version;
 
 
 export interface Mountable {
@@ -11,7 +9,7 @@ export interface Mountable {
   unmount(root: Path): Promise<any>
 }
 
-class MountOptions {
+export class MountOptions {
   mfs?: Path = undefined
   ipfs?: Path = undefined
   ipns?: Path = undefined
@@ -24,14 +22,14 @@ class MountOptions {
   });
 }
 
-async function mountUntilDone(m: Mountable, root: Path, done: Promise<void>) {
+export async function mountUntilDone(m: Mountable, root: Path, done: Promise<void>) {
   await m.mount(root)
   console.log(`mounted ${root}`)
   try { await done }
   finally { await m.unmount(root) }
 }
 
-async function mountAll(options: MountOptions) {
+export async function mountAll(options: MountOptions) {
   const mounts = new Array<Promise<void>>()
 
   const ipfs = new IpfsApi(options.ipfsOptions)
@@ -50,16 +48,3 @@ async function mountAll(options: MountOptions) {
   }
   await Promise.all(mounts)
 }
-
-
-const command = commander
-  .version(version)
-  .option("--mfs [path]", "mount point for mfs (ipfs files)")
-  .option("--ipfs [path]", "mount point for ipfs")
-  .parse(process.argv)
-
-const mountOptions = Object.assign(new MountOptions(), command);
-
-mountAll(mountOptions)
-  .then(() => console.log("done"))
-  .catch(console.log);

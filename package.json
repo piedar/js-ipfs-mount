@@ -2,10 +2,16 @@
   "name": "ipfs-mount",
   "version": "0.1.0",
   "description": "mount /ipfs /ipns /mfs",
-  "main": "index.js",
+  "main": "./dist/index.js",
+  "bin": {
+    "ipfs-mount": "./dist/bin/ipfs-mount.js"
+  },
   "repository": "https://github.com/piedar/js-ipfs-mount",
   "author": "Bennjamin Blast <bennjamin.blast@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "prepare": "tsc"
+  },
   "devDependencies": {
     "@types/commander": "^2.12.2",
     "@types/node": "^9.6.6",
