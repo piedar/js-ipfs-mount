@@ -49,7 +49,7 @@ async function ipfsCat_File(ipfs: typeof IpfsApi, ipfsPath: string, buffer: Buff
   const file: Buffer = await ipfs.cat(ipfsPath, segment);
 
   let fileOffset = 0
-  if (file.byteLength !== segment.length) {
+  if (file.byteLength > segment.length) {
     debug("fixme: ipfs.cat() ignored " + stringify(segment) + " and returned " + stringify({ offset: 0, length: file.byteLength }))
     fileOffset = segment.offset
   }
