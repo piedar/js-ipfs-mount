@@ -15,6 +15,7 @@ export class MountOptions {
   ipns?: Path = undefined
 
   ipfsOptions = { }
+  fuseOptions = new Array<string>()
 
   done: Promise<void> = new Promise((resolve, reject) => {
     process.on("SIGINT", () => resolve());
@@ -39,7 +40,7 @@ export async function mountAll(options: MountOptions) {
   }
 
   if (options.ipfs) {
-    mounts.push(mountUntilDone(new IpfsMountable(ipfs), options.ipfs, options.done));
+    mounts.push(mountUntilDone(new IpfsMountable(ipfs, options.fuseOptions), options.ipfs, options.done));
   }
 
   if (mounts.length == 0) {

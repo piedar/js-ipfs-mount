@@ -17,11 +17,11 @@ function stringify(value: Object): string {
 
 
 export class IpfsMountable implements Mountable {
-  constructor(private readonly ipfs: typeof IpfsApi) { }
+  constructor(private readonly ipfs: typeof IpfsApi, private readonly fuseOptions?: string[]) { }
 
   mount(root: Path) {
     return new Promise((resolve, reject) =>
-      fuse.mount(root, new IpfsMount(this.ipfs),
+      fuse.mount(root, new IpfsMount(this.ipfs, this.fuseOptions),
         (err) => err ? reject(err) : resolve()
     ));
   }
@@ -107,7 +107,7 @@ async function ipfsCat_ReadStream(ipfs: typeof IpfsApi, ipfsPath: string, buffer
 
 
 class IpfsMount implements fuse.MountOptions {
-  constructor(private readonly ipfs: typeof IpfsApi) {
+  constructor(private readonly ipfs: typeof IpfsApi, readonly options?: string[]) {
     debug({ IpfsMount: this });
   }
 
