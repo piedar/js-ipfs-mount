@@ -28,10 +28,10 @@ export class IpfsMountable implements Mountable {
 
 
 function errorToCode(err: any): number {
-  return typeof err === "number" ? err :
-                err instanceof Error && err.message === "file does not exist" ? fuse.ENOENT :
-                err instanceof Error && err.message === "path must contain at least one component" ? fuse.EPERM :
-                -1;
+  return typeof err === "number" ? err
+       : err instanceof Error && err.message === "file does not exist" ? fuse.ENOENT
+       : err instanceof Error && err.message === "path must contain at least one component" ? fuse.EPERM
+       : -1;
 }
 
 
@@ -197,7 +197,8 @@ class IpfsMount implements fuse.MountOptions {
     }
     const bail = (err: any, reason?: any) => {
       debug({ err, reason });
-      reply(errorToCode(err))
+      // make sure the return code is negative
+      reply(-Math.abs(errorToCode(err)))
     }
 
     if (path === "/") return bail(fuse.EPERM)
@@ -209,7 +210,7 @@ class IpfsMount implements fuse.MountOptions {
 
     ipfsCat(this.ipfs, ipfsPath, buffer, { offset, length })
       .then(result => reply(result.bytesCopied))
-      .catch(debug)
+      .catch(bail)
   }
 }
 

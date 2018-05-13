@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 import { MountOptions, mountAll } from "../"
 import * as commander from "commander"
