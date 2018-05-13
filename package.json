@@ -15,12 +15,14 @@
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",
+    "@types/debug": "^0.0.30",
     "@types/node": "^9.6.6",
     "ts-node": "^6.0.3",
     "typescript": "^2.8.3"
   },
   "dependencies": {
     "commander": "^2.15.1",
+    "debug": "^3.1.0",
     "fuse-bindings": "^2.11.2",
     "ipfs-api": "^21.0.0",
     "ipfs-fuse": "^0.3.2",

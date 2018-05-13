@@ -1,2 +1,2 @@
 
-export { Mountable, MountOptions, mountUntilDone, mountAll } from "./mount"
+export * from "./mount"

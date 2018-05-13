@@ -17,22 +17,23 @@ export class MountOptions {
   ipfsOptions = { }
   fuseOptions = new Array<string>()
 
-  done: Promise<void> = new Promise((resolve, reject) => {
-    process.on("SIGINT", () => resolve());
-    //process.on("SIGTERM", () => resolve());
-  });
+  done(message: string): Promise<void> {
+    console.log(message)
+    return new Promise((resolve, reject) => {
+      process.on("SIGINT", () => resolve());
+      //process.on("SIGTERM", () => resolve());
+    });
+  }
 }
 
-export async function mountUntilDone(m: Mountable, root: Path, done: Promise<void>) {
+export async function mountUntilDone<T>(m: Mountable, root: Path, done: (message: string) => Promise<T>): Promise<T> {
   await m.mount(root)
-  console.log(`mounted ${root}`)
-  try { await done }
+  try { return await done(`mounted ${root}`) }
   finally { await m.unmount(root) }
 }
 
 export async function mountAll(options: MountOptions) {
   const mounts = new Array<Promise<void>>()
-
   const ipfs = new IpfsApi(options.ipfsOptions)
 
   if (options.mfs) {

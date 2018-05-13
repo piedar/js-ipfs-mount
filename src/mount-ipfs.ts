@@ -4,16 +4,8 @@ import { Path } from "./path"
 import * as fuse from "fuse-bindings"
 import { Mountable } from "./mount"
 import { Readable, Writable } from "readable-stream"
+const debug = require("debug")("IpfsMount")
 const IpfsApi = require("ipfs-api")
-
-
-function debug(...rest: any[]) {
-  console.log(rest)
-}
-
-function stringify(value: Object): string {
-  return JSON.stringify(value)
-}
 
 
 export class IpfsMountable implements Mountable {
@@ -50,7 +42,7 @@ async function ipfsCat_File(ipfs: typeof IpfsApi, ipfsPath: string, buffer: Buff
 
   let fileOffset = 0
   if (file.byteLength > segment.length) {
-    debug("fixme: ipfs.cat() ignored " + stringify(segment) + " and returned " + stringify({ offset: 0, length: file.byteLength }))
+    debug("fixme: ipfs.cat() ignored ", { segment }, " and returned ", { offset: 0, length: file.byteLength })
     fileOffset = segment.offset
   }
 
@@ -65,7 +57,7 @@ async function ipfsCat_ReadStream(ipfs: typeof IpfsApi, ipfsPath: string, buffer
   const stream: Readable = ipfs.catReadableStream(ipfsPath, segment);
 
   if (stream.readableLength !== segment.length) {
-    debug("fixme: ipfs.catReadableStream() ignored " + stringify(segment) + " and returned " + stringify({ offset: 0, length: stream.readableLength }))
+    debug("fixme: ipfs.catReadableStream() ignored ", { segment }, " and returned ", { offset: 0, length: stream.readableLength })
   }
 
   stream.on("data", chunk => {
