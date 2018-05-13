@@ -7,13 +7,17 @@ const FuseMfs = require("ipfs-fuse");
 const mountAsync = util.promisify(FuseMfs.mount);
 const unmountAsync = util.promisify(FuseMfs.unmount);
 
-export const MfsMountable: Mountable = {
-  async mount(root: Path) {
-    await mountAsync(root, {
-      ipfs: { },
+export class MfsMountable implements Mountable {
+  constructor(private readonly ipfsOptions?: any) { }
+
+  mount(root: Path) {
+    return mountAsync(root, {
+      ipfs: this.ipfsOptions || { },
       fuse: { displayFolder: true }
     })
-  },
+  }
 
-  unmount: (root: Path) => unmountAsync(root)
+  unmount(root: Path) {
+    return unmountAsync(root)
+  }
 }

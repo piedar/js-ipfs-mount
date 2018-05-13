@@ -35,8 +35,7 @@ export async function mountAll(options: MountOptions) {
   const ipfs = new IpfsApi(options.ipfsOptions)
 
   if (options.mfs) {
-    // todo: inject ipfsOptions
-    mounts.push(mountUntilDone(MfsMountable, options.mfs, options.done));
+    mounts.push(mountUntilDone(new MfsMountable(options.ipfsOptions), options.mfs, options.done));
   }
 
   if (options.ipfs) {
