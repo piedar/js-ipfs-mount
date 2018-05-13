@@ -14,7 +14,7 @@ It aims for feature parity with `ipfs mount` of go-ipfs, but faster.
 
 ```bash
 mkdir /ipfs
-ipfs-mount --ipfs=/ipfs
+ipfs-mount ipfs --root=/ipfs
 
 # test
 file /ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme
@@ -26,7 +26,7 @@ This mutable file system represents `ipfs files`.
 
 ```bash
 mkdir /mfs
-ipfs-mount --mfs=/mfs
+ipfs-mount mfs --root=/mfs
 
 # test
 echo "hello" | ipfs files write --create /hello.txt

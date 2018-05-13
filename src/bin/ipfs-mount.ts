@@ -1,19 +1,52 @@
 #!/usr/bin/env ts-node
 
-import { MountOptions, mountAll } from "../"
-import * as commander from "commander"
-
-
+import * as program from "commander"
+import * as mount from "../mount"
+import { MfsMountable } from "../mount-mfs"
+import { IpfsMountable } from "../mount-ipfs"
+const IpfsApi = require("ipfs-api")
 const version = require("../../package.json").version
-const command = commander
+
+
+function done(message: string): Promise<void> {
+  console.log(message)
+  return new Promise((resolve, reject) => {
+    process.on("SIGINT", () => resolve());
+    //process.on("SIGTERM", () => resolve());
+  });
+}
+
+const ipfsOptions = { }
+const ipfs = new IpfsApi(ipfsOptions)
+const mounts = new Array<Promise<void>>()
+
+program
   .version(version)
-  .option("--mfs [path]", "mount point for mfs (ipfs files)")
-  .option("--ipfs [path]", "mount point for ipfs")
+
+program
+  .command("mfs")
+  .description("mount mutable file system")
+  .option("--root [dir]", "mount point", "/mfs")
+  .action((options) => {
+    mounts.push(mount.untilDone(new MfsMountable(ipfsOptions), options.root, done))
+  })
+
+program
+  .command("ipfs")
+  .description("mount interplanetary file system")
+  .option("--root [dir]", "mount point", "/ipfs")
   .option("--fuse-options [options]", "comma-separated mount options to pass to fuse", (val) => val.split(","))
-  .parse(process.argv)
+  .action((options) => {
+    mounts.push(mount.untilDone(new IpfsMountable(ipfs, options.fuseOptions), options.root, done));
+  })
 
-const mountOptions = Object.assign(new MountOptions(), command);
+program.parse(process.argv);
 
-mountAll(mountOptions)
+if (mounts.length == 0) {
+  console.log("must specify a command")
+  program.help()
+}
+
+Promise.all(mounts)
   .then(() => console.log("done"))
-  .catch(console.log);
+  .catch(console.log)
