@@ -35,7 +35,9 @@ program
   .command("ipfs")
   .description("mount interplanetary file system")
   .option("--root [dir]", "mount point", "/ipfs")
-  .option("--fuse-options [options]", "comma-separated mount options to pass to fuse", (val) => val.split(","))
+  .option("--fuse-options [options]", "comma-separated mount options to pass to fuse",
+    (val) => val.split(","), ["auto_cache", "auto_unmount"]
+  )
   .action((options) => {
     mounts.push(mount.untilDone(new IpfsMountable(ipfs, options.fuseOptions), options.root, done));
   })

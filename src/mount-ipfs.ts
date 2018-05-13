@@ -103,6 +103,8 @@ class IpfsMount implements fuse.MountOptions {
     debug({ IpfsMount: this });
   }
 
+  private readonly firstAccessByPath = new Map<string, Date>();
+
   readonly create = (path: string, mode: number, reply: (err: number) => void) => {
     return reply(fuse.EROFS)
   }
@@ -133,6 +135,13 @@ class IpfsMount implements fuse.MountOptions {
     }
 
     const now = new Date(Date.now())
+
+    let firstAccess = this.firstAccessByPath.get(path);
+    if (!firstAccess) {
+      firstAccess = now
+      this.firstAccessByPath.set(path, firstAccess)
+    }
+
     let stats = {
       dev: 0,
       ino: 0,
@@ -144,16 +153,18 @@ class IpfsMount implements fuse.MountOptions {
       rdev: 0,
       blksize: 0,
       blocks: 0,
-      mtime: now,
+      ctime: firstAccess,
+      mtime: firstAccess,
       atime: now,
-      ctime: now,
     }
 
     const ipfsPath = path === "/" ? path : "/ipfs/"+path
 
     this.ipfs.files.stat(ipfsPath)
       .then((ipfsStat: any) => {
-        let [filetype, permissions] =
+        debug({ ipfsStat })
+
+        const [filetype, permissions] =
           ipfsStat.type === "directory" ? [fs.constants.S_IFDIR, 0o111] :
           ipfsStat.type === "file"      ? [fs.constants.S_IFREG, 0o444] :
                                           [0, 0o000]

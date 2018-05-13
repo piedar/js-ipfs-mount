@@ -75,7 +75,7 @@ sys     0m0.015s
 Our mount is slower than the http gateway but still faster than `ipfs mount`.
 
 ```
-$ ts-node src/mount.ts --ipfs /ipfs-mount
+$ ipfs-mount ipfs --root=/ipfs-mount
 $ time curl --output /dev/null file:///ipfs-mount/${test_file}
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
@@ -85,3 +85,5 @@ real    0m0.883s
 user    0m0.008s
 sys     0m0.020s
 ```
+
+Subsequent access should be way faster because OS file caching works well with immutable IPFS objects.
