@@ -1,4 +1,9 @@
 
+## Install
+
+    yarn global add git+https://github.com/piedar/js-ipfs-mount.git
+    # or
+    # npm install -g git+https://github.com/piedar/js-ipfs-mount.git
 
 ## Mounts
 
@@ -17,7 +22,7 @@ file /ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme
 
 ### /mfs
 
-This mutable file system represents the files you have named in IPFS.
+This mutable file system represents `ipfs files`.
 
 ```bash
 mkdir /mfs

@@ -1,0 +1,3 @@
+.alm/
+#dist/ # needed for node
+node_modules/
