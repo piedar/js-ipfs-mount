@@ -1,8 +1,4 @@
 
-## todo
-
-[ ] mount /ipns
-[ ] specs
 
 ## Mounts
 
@@ -31,7 +27,6 @@ ipfs-mount --mfs=/mfs
 echo "hello" | ipfs files write --create /hello.txt
 cat /mfs/hello.txt
 ```
-
 
 ## Performance
 
