@@ -1,15 +1,36 @@
 
+## todo
 
-### todo
-
-[ ] - mount /mfs
-
-    mkdir /mfs
-    ipfs-mount --mfs=/mfs
-
-[ ] - mount /ipfs
-[ ] - mount /ipns
+[ ] mount /ipns
 [ ] specs
+
+## Mounts
+
+### /ipfs
+
+This read-only file system represents raw objects in IPFS.
+It aims for feature parity with `ipfs mount` of go-ipfs, but faster.
+
+```bash
+mkdir /ipfs
+ipfs-mount --ipfs=/ipfs
+
+# test
+file /ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme
+```
+
+### /mfs
+
+This mutable file system represents the files you have named in IPFS.
+
+```bash
+mkdir /mfs
+ipfs-mount --mfs=/mfs
+
+# test
+echo "hello" | ipfs files write --create /hello.txt
+cat /mfs/hello.txt
+```
 
 
 ## Performance
