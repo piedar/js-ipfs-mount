@@ -9,11 +9,15 @@ const IpfsApi = require("ipfs-api")
 
 
 export class IpfsMountable implements Mountable {
-  constructor(private readonly ipfs: typeof IpfsApi, private readonly fuseOptions?: string[]) { }
+  constructor(
+    private readonly ipfs: typeof IpfsApi,
+    private readonly fuseOptions: fuse.MountOptions = { displayFolder: false },
+  ) { }
 
   mount(root: Path) {
+    const mountOptions = Object.assign(new IpfsMount(this.ipfs), this.fuseOptions)
     return new Promise((resolve, reject) =>
-      fuse.mount(root, new IpfsMount(this.ipfs, this.fuseOptions),
+      fuse.mount(root, mountOptions,
         (err) => err ? reject(err) : resolve()
     ));
   }
@@ -99,7 +103,7 @@ async function ipfsCat_ReadStream(ipfs: typeof IpfsApi, ipfsPath: string, buffer
 
 
 class IpfsMount implements fuse.MountOptions {
-  constructor(private readonly ipfs: typeof IpfsApi, readonly options?: string[]) {
+  constructor(private readonly ipfs: typeof IpfsApi) {
     debug({ IpfsMount: this });
   }
 

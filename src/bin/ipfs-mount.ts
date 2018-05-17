@@ -27,8 +27,12 @@ program
   .command("mfs")
   .description("mount mutable file system")
   .option("--root <dir>", "mount point", "/mfs")
+  .option("--fuse-options <options>", "comma-separated fuse options - see `man mount.fuse`",
+    (val) => val.split(","), ["auto_cache", "auto_unmount"]
+  )
   .action((options) => {
-    mounts.push(mount.untilDone(new MfsMountable(ipfsOptions), options.root, done))
+    const fuseOptions = { displayFolder: true, options: options.fuseOptions }
+    mounts.push(mount.untilDone(new MfsMountable(ipfsOptions, fuseOptions), options.root, done))
   })
 
 program
@@ -39,7 +43,8 @@ program
     (val) => val.split(","), ["auto_cache", "auto_unmount"]
   )
   .action((options) => {
-    mounts.push(mount.untilDone(new IpfsMountable(ipfs, options.fuseOptions), options.root, done));
+    const fuseOptions = { displayFolder: false, options: options.fuseOptions }
+    mounts.push(mount.untilDone(new IpfsMountable(ipfs, fuseOptions), options.root, done));
   })
 
 program.parse(process.argv);
