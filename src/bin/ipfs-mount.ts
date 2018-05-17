@@ -26,7 +26,7 @@ program
 program
   .command("mfs")
   .description("mount mutable file system")
-  .option("--root [dir]", "mount point", "/mfs")
+  .option("--root <dir>", "mount point", "/mfs")
   .action((options) => {
     mounts.push(mount.untilDone(new MfsMountable(ipfsOptions), options.root, done))
   })
@@ -34,8 +34,8 @@ program
 program
   .command("ipfs")
   .description("mount interplanetary file system")
-  .option("--root [dir]", "mount point", "/ipfs")
-  .option("--fuse-options [options]", "comma-separated mount options to pass to fuse",
+  .option("--root <dir>", "mount point", "/ipfs")
+  .option("--fuse-options <options>", "comma-separated fuse options - see `man mount.fuse`",
     (val) => val.split(","), ["auto_cache", "auto_unmount"]
   )
   .action((options) => {
