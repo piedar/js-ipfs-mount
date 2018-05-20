@@ -21,6 +21,18 @@ export class MfsMountable implements Mountable {
     this.fuseOptions = {
       displayFolder: true,
 
+      chown: (path: string, uid: number, gid: number, cb: (err: number) => void) => {
+        debug("custom chown " + path, { uid, gid, cb })
+        debug("fixme: chown does nothing")
+        return cb(0)
+      },
+
+      chmod: (path: string, mode: any, cb: (err: number) => void) => {
+        debug("custom chmod " + path, { mode, cb })
+        debug("fixme: chmod does nothing")
+        return cb(0)
+      },
+
       getattr: (path: string, cb: (err: number, stats: fuse.Stats) => void) => {
         debug("custom getattr " + path)
 
