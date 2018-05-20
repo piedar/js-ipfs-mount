@@ -11,8 +11,14 @@ const IpfsApi = require("ipfs-api")
 export class IpfsMountable implements Mountable {
   constructor(
     private readonly ipfs: typeof IpfsApi,
-    private readonly fuseOptions: fuse.MountOptions = { displayFolder: false },
-  ) { }
+    fuseOptions: fuse.MountOptions = { },
+  ) {
+    this.fuseOptions = { displayFolder: false }
+    // caller's options override the defaults
+    this.fuseOptions = Object.assign(this.fuseOptions, fuseOptions)
+  }
+
+  private readonly fuseOptions: fuse.MountOptions
 
   mount(root: Path) {
     const mountOptions = Object.assign(new IpfsMount(this.ipfs), this.fuseOptions)

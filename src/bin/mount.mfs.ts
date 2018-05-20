@@ -16,7 +16,7 @@ command
   .description("mount mutable file system")
   .option("--target <dir>", "mount point", "/mfs")
   .option("-o, --fuse-options <options>", "comma-separated fuse options - see `man mount.fuse`",
-    (val) => val.split(","), ["auto_cache", "auto_unmount", "big_writes"]
+    (val) => val.split(","), ["auto_unmount", "big_writes"]
   )
 
 command.parse(process.argv)
