@@ -14,7 +14,7 @@ It aims for feature parity with `ipfs mount` of go-ipfs, but faster.
 
 ```bash
 mkdir /ipfs
-ipfs-mount ipfs --root=/ipfs
+mount.ipfs /ipfs
 
 # test
 file /ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme
@@ -26,7 +26,7 @@ This mutable file system represents `ipfs files`.
 
 ```bash
 mkdir /mfs
-ipfs-mount mfs --root=/mfs
+mount.mfs /mfs
 
 # test
 echo "hello" | ipfs files write --create /hello.txt
@@ -70,20 +70,20 @@ user    0m0.004s
 sys     0m0.015s
 ```
 
-#### Benchmark js-ipfs-mount 76c171c72fc4
+#### Benchmark js-ipfs-mount fbe7ac6a7c35
 
 Our mount is slower than the http gateway but still faster than `ipfs mount`.
 
 ```
-$ ipfs-mount ipfs --root=/ipfs-mount
-$ time curl --output /dev/null file:///ipfs-mount/${test_file}
+$ mount.ipfs /ipfs
+$ time curl --output /dev/null file:///ipfs/${test_file}
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100 21.1M  100 21.1M    0     0  24.3M      0 --:--:-- --:--:-- --:--:-- 25.4M
+100 21.1M  100 21.1M    0     0  22.9M      0 --:--:-- --:--:-- --:--:-- 23.7M
 
-real    0m0.883s
-user    0m0.008s
-sys     0m0.020s
+real    0m0.949s
+user    0m0.009s
+sys     0m0.014s
 ```
 
-Subsequent access should be way faster because OS file caching works well with immutable IPFS objects.
+Subsequent access should be way faster because `auto_cache` works well with immutable IPFS objects.

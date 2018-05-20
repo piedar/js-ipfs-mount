@@ -4,14 +4,14 @@
   "description": "mount /ipfs /ipns /mfs",
   "main": "./dist/index.js",
   "bin": {
-    "ipfs-mount": "./dist/bin/ipfs-mount.js"
+    "mount.ipfs": "./dist/bin/mount.ipfs.js",
+    "mount.mfs" : "./dist/bin/mount.mfs.js"
   },
   "repository": "https://github.com/piedar/js-ipfs-mount",
   "author": "Bennjamin Blast <bennjamin.blast@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "prepare": "tsc",
-    "ipfs-mount": "ts-node ./src/bin/ipfs-mount.ts"
+    "prepare": "tsc"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",
