@@ -6,8 +6,8 @@ export interface Mountable {
   unmount(root: Path): Promise<any>
 }
 
-export async function untilDone<T>(m: Mountable, root: Path, done: (message: string) => Promise<T>): Promise<T> {
+export async function untilDone<T>(m: Mountable, root: Path, done: () => Promise<T>): Promise<T> {
   await m.mount(root)
-  try { return await done(`mounted ${root}`) }
+  try { return await done() }
   finally { await m.unmount(root) }
 }

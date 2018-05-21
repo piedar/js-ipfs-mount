@@ -24,7 +24,7 @@ export class IpfsMountable implements Mountable {
     const mountOptions = Object.assign(new IpfsMount(this.ipfs), this.fuseOptions)
     return new Promise((resolve, reject) =>
       fuse.mount(root, mountOptions,
-        (err) => err ? reject(err) : resolve()
+        (err) => err ? reject(err) : resolve(debug("mounted " + root))
     ));
   }
 
@@ -109,9 +109,7 @@ async function ipfsCat_ReadStream(ipfs: typeof IpfsApi, ipfsPath: string, buffer
 
 
 class IpfsMount implements fuse.MountOptions {
-  constructor(private readonly ipfs: typeof IpfsApi) {
-    debug({ IpfsMount: this });
-  }
+  constructor(private readonly ipfs: typeof IpfsApi) { }
 
   private readonly firstAccessByPath = new Map<string, Date>();
 
