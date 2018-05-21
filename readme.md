@@ -1,4 +1,5 @@
 
+
 ## Install
 
     yarn global add git+https://github.com/piedar/js-ipfs-mount.git
@@ -31,6 +32,35 @@ mount.mfs /mfs
 # test
 echo "hello" | ipfs files write --create /hello.txt
 cat /mfs/hello.txt
+```
+
+#### Caveats
+
+Because writes to `/mfs` are hashed and stored directly into `ipfs files write`, importing the same file with different tools might create new ipfs blocks!
+
+You can see the chunk sizes in the debug log.
+
+```bash
+DEBUG=* mount.mfs /mfs &
+
+dd if=/dev/zero of=/mfs/zeroes-64K bs=64K count=10
+dd if=/dev/zero of=/mfs/zeroes-128K bs=128K count=5
+
+ipfs files ls -l /
+```
+```
+  ipfs-fuse:write { path: '/zeroes-128K' } +5ms
+   write[42] 131072 bytes to 12320768
+```
+```
+zeroes-64K      QmPrTfr3hKZq7YWA97Z7QU1vfVQQF9WY2zzmWaVDFJWzFR  655360
+zeroes-128K     QmYAkYe8y1tmNeTxfp8HLDMVoupVbUP8jk4uksHeF8v5QC  655360
+```
+
+For best results, use `mbuffer` to standardize buffer sizes and improve performance for old tools which write in small chunks like 4096 bytes.
+
+```
+wget "${URL}" -O- | mbuffer -s 128k -o /mfs/downloads/"${FILE}"
 ```
 
 ## Performance
