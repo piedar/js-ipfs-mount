@@ -1,11 +1,11 @@
 #!/usr/bin/env ts-node
 
 import * as command from "commander"
-import { done } from "../signals"
-import * as mount from "../mount"
-import { MfsMountable } from "../mount-mfs"
+import * as mount from "../lib/mount"
+import { MfsMountable } from "../lib/mount-mfs"
+import { done } from "../lib/signals"
+import { version } from "../lib/version"
 const IpfsApi = require("ipfs-api")
-const version = require("../../package.json").version
 
 
 command
