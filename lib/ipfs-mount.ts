@@ -17,12 +17,12 @@ function getOrAdd<TKey, TValue>(
   map: Map<TKey, TValue>, key: TKey,
   valueSource: TValue | (() => TValue)): TValue
 {
-  return map.get(key)
-    || (() => {
-      const value = resolve(valueSource)
-      map.set(key, value)
-      return value
-    })()
+  let value = map.get(key)
+  if (value === undefined) {
+    value = resolve(valueSource)
+    map.set(key, value)
+  }
+  return value
 }
 
 
