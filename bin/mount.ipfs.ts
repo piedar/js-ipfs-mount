@@ -21,15 +21,19 @@ command
 
 command.parse(process.argv)
 
-if (!command.target) {
+const target: string | undefined = command.target
+  || (command.args.length == 1 ? command.args[0]
+    : undefined);
+
+if (!target) {
   console.log("must specify a target")
-  command.help()
+  throw command.help()
 }
 
 const ipfsOptions = { }
 const ipfs = new IpfsApi(ipfsOptions)
 const fuseOptions = { displayFolder: false, options: command.fuseOptions }
 
-mount.untilDone(new IpfsMountable(ipfs, fuseOptions), command.target, done)
+mount.untilDone(new IpfsMountable(ipfs, fuseOptions), target, done)
   .then(() => console.log("done"))
   .catch(console.log)

@@ -21,14 +21,18 @@ command
 
 command.parse(process.argv)
 
-if (!command.target) {
+const target: string | undefined = command.target
+  || (command.args.length == 1 ? command.args[0]
+    : undefined);
+
+if (!target) {
   console.log("must specify a target")
-  command.help()
+  throw command.help()
 }
 
 const ipfsOptions = { }
 const fuseOptions = { displayFolder: true, options: command.fuseOptions }
 
-mount.untilDone(new MfsMountable(ipfsOptions, fuseOptions), command.target, done)
+mount.untilDone(new MfsMountable(ipfsOptions, fuseOptions), target, done)
   .then(() => console.log("done"))
   .catch(console.log)
