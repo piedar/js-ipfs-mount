@@ -2,7 +2,7 @@
 
 import * as command from "commander"
 import * as mount from "../lib/mount"
-import { MfsMountable } from "../lib/mount-mfs"
+import { MfsMountable } from "../lib/mfs-mount"
 import { done } from "../lib/signals"
 import { version } from "../lib/version"
 const IpfsApi = require("ipfs-api")
