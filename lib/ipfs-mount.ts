@@ -8,6 +8,24 @@ const IpfsApi = require("ipfs-api")
 const debug = require("debug")("IpfsMount")
 
 
+function resolve<T>(source: T | (() => T)): T {
+  return typeof source === "function" ? source()
+       : source
+}
+
+function getOrAdd<TKey, TValue>(
+  map: Map<TKey, TValue>, key: TKey,
+  valueSource: TValue | (() => TValue)): TValue
+{
+  return map.get(key)
+    || (() => {
+      const value = resolve(valueSource)
+      map.set(key, value)
+      return value
+    })()
+}
+
+
 export class IpfsMountable implements Mountable {
   constructor(
     private readonly ipfs: typeof IpfsApi,
@@ -44,7 +62,6 @@ function errorToCode(err: any): number {
        : -1;
 }
 
-
 class IpfsMount implements fuse.MountOptions {
   constructor(private readonly ipfs: typeof IpfsApi) { }
 
@@ -80,12 +97,7 @@ class IpfsMount implements fuse.MountOptions {
     }
 
     const now = new Date(Date.now())
-
-    let firstAccess = this.firstAccessByPath.get(path);
-    if (!firstAccess) {
-      firstAccess = now
-      this.firstAccessByPath.set(path, firstAccess)
-    }
+    const firstAccess = getOrAdd(this.firstAccessByPath, path, now)
 
     let stats = {
       dev: 0,
