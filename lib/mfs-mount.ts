@@ -88,6 +88,17 @@ function MfsMount(ipfs: typeof IpfsApi): fuse.MountOptions {
           gid: process.getgid ? process.getgid() : 0
         } as any)
       })
-    }
+    },
+
+    write: (path, fd, buf, len, pos, reply) => {
+      debug("write", { path, len, pos })
+
+      ipfs.files.write(path, buf, { offset: pos, count: len })
+        .then(() => reply(len))
+        .catch((err: any) => {
+          debug({ err })
+          reply(fuse.EREMOTEIO)
+        })
+    },
   }
 }
