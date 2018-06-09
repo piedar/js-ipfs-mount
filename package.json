@@ -11,7 +11,7 @@
   "author": "Bennjamin Blast <bennjamin.blast@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "prepare": "tsc && sed -i 's,#!/usr/bin/env ts-node,#!/usr/bin/env node,g' ./dist/bin/*.js"
+    "prepare": "tsc && sed -i 's,#!/usr/bin/env ts-node,#!/usr/bin/env node,g' ./dist/bin/*.js && chmod +x ./dist/bin/*.js"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",

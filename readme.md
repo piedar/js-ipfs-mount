@@ -63,6 +63,23 @@ For best results, use `mbuffer` to standardize buffer sizes and improve performa
 wget "${URL}" -O- | mbuffer -s 128k -o /mfs/downloads/"${FILE}"
 ```
 
+## Developer quick start
+
+```bash
+git clone https://github.com/piedar/js-ipfs-mount
+cd js-ipfs-mount
+yarn && yarn prepare
+DEBUG=* node dist/bin/mount.ipfs.js /ipfs
+# hit Ctrl-C to stop
+```
+
+```bash
+# programs under ./bin/ are marked executable
+# on *nix systems, you can run them directly without recompiling!
+yarn global add ts-node
+DEBUG=* bin/mount.ipfs.ts /ipfs
+```
+
 ## Performance
 
 #### Invariants
