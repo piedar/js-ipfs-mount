@@ -8,22 +8,26 @@ import { version } from "../lib/version"
 const IpfsApi = require("ipfs-api")
 
 
+const targetDefault = "/ipfs"
+
 command
   .version(version)
 
 command
   .arguments("[target]")
   .description("mount interplanetary file system")
-  .option("--target <dir>", "mount point", "/ipfs")
+  .option("--target <dir>", `mount point (default: ${targetDefault})`)
   .option("-o, --fuse-options <options>", "comma-separated fuse options - see `man mount.fuse`",
     (val) => val.split(","), ["auto_cache", "auto_unmount"]
   )
 
 command.parse(process.argv)
 
-const target: string | undefined = command.target
-  || (command.args.length == 1 ? command.args[0]
-    : undefined);
+
+const target =
+    command.target ? command.target as string
+  : command.args.length == 1 ? command.args[0]
+  : targetDefault;
 
 if (!target) {
   console.log("must specify a target")
