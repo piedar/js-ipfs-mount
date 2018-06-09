@@ -42,7 +42,7 @@ export class IpfsMountable implements Mountable {
     const mountOptions = Object.assign(new IpfsMount(this.ipfs), this.fuseOptions)
     return new Promise((resolve, reject) =>
       fuse.mount(root, mountOptions,
-        (err) => err ? reject(err) : resolve(debug("mounted " + root))
+        (err) => err ? reject(err) : resolve()
     ));
   }
 

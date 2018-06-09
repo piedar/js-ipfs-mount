@@ -34,5 +34,4 @@ const ipfsOptions = { }
 const fuseOptions = { displayFolder: true, options: command.fuseOptions }
 
 mount.untilDone(new MfsMountable(ipfsOptions, fuseOptions), target, done)
-  .then(() => console.log("done"))
   .catch(console.log)
