@@ -56,15 +56,16 @@ function MfsMount(ipfs: typeof IpfsApi): fuse.MountOptions {
         debug(stats)
         return cb(0, stats)
       }
-      const bail = (err: number, message?: string) => {
+      const bail = (err: number, message?: any) => {
         debug({ err, message })
         return cb(err, undefined!)
       }
 
       ipfs.files.stat(path, (err: any, stat: any) => {
         if (err) {
-          if (err.message === 'file does not exist') return cb(fuse.ENOENT, undefined!)
-          return bail(fuse.EREMOTEIO, err.message)
+          const errno = err.message === 'file does not exist' ? fuse.ENOENT
+                      : fuse.EREMOTEIO;
+          return bail(errno, err)
         }
 
         // blksize is vital for write performance
