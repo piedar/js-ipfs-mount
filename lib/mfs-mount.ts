@@ -94,12 +94,23 @@ function MfsMount(ipfs: typeof IpfsApi): fuse.MountOptions {
     write: (path, fd, buf, len, pos, reply) => {
       debug("write", { path, len, pos })
 
-      ipfs.files.write(path, buf, { offset: pos, count: len })
+      ipfs.files.write(path, buf, { offset: pos, count: len, flush: false })
         .then(() => reply(len))
         .catch((err: any) => {
           debug({ err })
           reply(fuse.EREMOTEIO)
         })
     },
+
+    flush: (path, fd, reply) => {
+      debug("flush", { path })
+
+      ipfs.files.flush(path)
+        .then(() => reply(0))
+        .catch((err: any) => {
+          debug({ err })
+          reply(fuse.EREMOTEIO)
+        })
+    }
   }
 }
