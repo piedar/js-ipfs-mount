@@ -16,8 +16,9 @@ export class MfsMountable implements Mountable {
     fuseOptions: fuse.MountOptions = { },
   ) {
     const ipfs = new IpfsApi(ipfsOptions)
+    const writer = MfsWriter_Direct(ipfs)
     // caller's options override the defaults
-    this.fuseOptions = Object.assign(MfsMount(ipfs), fuseOptions)
+    this.fuseOptions = Object.assign(MfsMount(ipfs, writer), fuseOptions)
   }
 
   private readonly fuseOptions: fuse.MountOptions
@@ -31,7 +32,7 @@ export class MfsMountable implements Mountable {
   }
 }
 
-function MfsMount(ipfs: typeof IpfsApi): fuse.MountOptions {
+function MfsMount(ipfs: typeof IpfsApi, writer: MfsWriter): fuse.MountOptions {
   const start = Date.now()
 
   return {
@@ -94,7 +95,7 @@ function MfsMount(ipfs: typeof IpfsApi): fuse.MountOptions {
     write: (path, fd, buf, len, pos, reply) => {
       debug("write", { path, len, pos })
 
-      ipfs.files.write(path, buf, { offset: pos, count: len, flush: false })
+      writer.write(path, buf, pos, len)
         .then(() => reply(len))
         .catch((err: any) => {
           debug({ err })
@@ -105,12 +106,29 @@ function MfsMount(ipfs: typeof IpfsApi): fuse.MountOptions {
     flush: (path, fd, reply) => {
       debug("flush", { path })
 
-      ipfs.files.flush(path)
+      writer.flush(path)
         .then(() => reply(0))
         .catch((err: any) => {
           debug({ err })
           reply(fuse.EREMOTEIO)
         })
+    }
+  }
+}
+
+
+type MfsWriter = {
+  write: (path: string, buffer: Buffer, offset: number, count: number) => Promise<void>
+  flush: (path: string) => Promise<void>
+}
+
+function MfsWriter_Direct(ipfs: typeof IpfsApi): MfsWriter {
+  return {
+    write: (path: string, buffer: Buffer, offset: number, count: number) => {
+      return ipfs.files.write(path, buffer, { offset: offset, count: count, flush: false })
+    },
+    flush: (path: string) => {
+      return ipfs.files.flush(path)
     }
   }
 }
