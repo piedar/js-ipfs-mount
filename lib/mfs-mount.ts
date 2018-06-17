@@ -1,6 +1,7 @@
 import * as util from "util";
 import * as fuse from "fuse-bindings"
 import { Path } from "./path";
+import { MfsWriter, MfsWriter_Direct, MfsWriter_WriteThrough } from "./mfs-write"
 import { Mountable } from "./mount"
 const debug = require("debug")("MfsMountable")
 const IpfsApi = require("ipfs-api")
@@ -112,23 +113,6 @@ function MfsMount(ipfs: typeof IpfsApi, writer: MfsWriter): fuse.MountOptions {
           debug({ err })
           reply(fuse.EREMOTEIO)
         })
-    }
-  }
-}
-
-
-type MfsWriter = {
-  write: (path: string, buffer: Buffer, offset: number, count: number) => Promise<void>
-  flush: (path: string) => Promise<void>
-}
-
-function MfsWriter_Direct(ipfs: typeof IpfsApi): MfsWriter {
-  return {
-    write: (path: string, buffer: Buffer, offset: number, count: number) => {
-      return ipfs.files.write(path, buffer, { offset: offset, count: count, flush: false })
-    },
-    flush: (path: string) => {
-      return ipfs.files.flush(path)
     }
   }
 }
