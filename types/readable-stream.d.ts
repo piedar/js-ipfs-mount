@@ -1,4 +1,4 @@
 
 declare module "readable-stream" {
-  export { Readable, Writable, Stream } from "stream"
+  export { Readable, Writable, Stream, PassThrough } from "stream"
 }
