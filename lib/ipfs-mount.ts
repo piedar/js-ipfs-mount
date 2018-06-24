@@ -2,28 +2,11 @@ import * as util from "util"
 import * as fs from "fs"
 import { Path } from "./path"
 import * as fuse from "fuse-bindings"
+import { getOrAdd } from "./extensions"
 import { Mountable } from "./mount"
 import { ipfsCat } from "./ipfs-cat"
 const IpfsApi = require("ipfs-api")
 const debug = require("debug")("IpfsMount")
-
-
-function resolve<T>(source: T | (() => T)): T {
-  return typeof source === "function" ? source()
-       : source
-}
-
-function getOrAdd<TKey, TValue>(
-  map: Map<TKey, TValue>, key: TKey,
-  valueSource: TValue | (() => TValue)): TValue
-{
-  let value = map.get(key)
-  if (value === undefined) {
-    value = resolve(valueSource)
-    map.set(key, value)
-  }
-  return value
-}
 
 
 export class IpfsMountable implements Mountable {
