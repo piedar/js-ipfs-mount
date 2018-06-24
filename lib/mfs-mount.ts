@@ -77,7 +77,7 @@ function MfsMount(ipfs: typeof IpfsApi, writer: MfsWriter): fuse.MountOptions {
         const now = Date.now()
 
         reply({
-          blksize: 16 * 1024,
+          blksize: 256 * 1024,
 
           mtime: now,
           atime: now,
