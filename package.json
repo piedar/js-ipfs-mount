@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "bin": {
     "mount.ipfs": "./dist/bin/mount.ipfs.js",
-    "mount.mfs" : "./dist/bin/mount.mfs.js"
+    "mount.mfs": "./dist/bin/mount.mfs.js"
   },
   "repository": "https://github.com/piedar/js-ipfs-mount",
   "author": "Bennjamin Blast <bennjamin.blast@gmail.com>",
@@ -24,7 +24,7 @@
     "commander": "^2.15.1",
     "debug": "^3.1.0",
     "fuse-bindings": "^2.11.2",
-    "ipfs-api": "^21.0.0",
+    "ipfs-api": "^22.1.0",
     "ipfs-fuse": "^0.3.2",
     "readable-stream": "^2.3.6"
   }
