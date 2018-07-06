@@ -1,16 +1,13 @@
 
 
-## Install
-
-    yarn global add git+https://github.com/piedar/js-ipfs-mount.git
-    # or
-    # npm install -g git+https://github.com/piedar/js-ipfs-mount.git
-
 ## Mounts
+
+`ipfs daemon` must already be running, but not necessarily as the same user who will `mount`.
+The command line programs follow the pattern from `man mount` and can be customized with options from `man mount.fuse`.
 
 ### /ipfs
 
-This read-only file system represents raw objects in IPFS.
+This read-only file system represents raw blocks and files in ipfs.
 It aims for feature parity with `ipfs mount` of go-ipfs, but faster.
 
 ```bash
@@ -24,6 +21,7 @@ file /ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/readme
 ### /mfs
 
 This mutable file system represents `ipfs files`.
+Files and directories there are pinned to the local node.
 
 ```bash
 mkdir /mfs
@@ -34,7 +32,20 @@ echo "hello" | ipfs files write --create /hello.txt
 cat /mfs/hello.txt
 ```
 
-#### Caveats
+
+## Install
+
+    yarn global add git+https://github.com/piedar/js-ipfs-mount.git
+    # or
+    # npm install -g git+https://github.com/piedar/js-ipfs-mount.git
+
+This software is beta-quality.
+It exposes wide-network content to programs which were never designed for that.
+Therefore, always run it inside an unprivileged user account, and __never__ as root.
+Be careful opening untrusted links under `/ipfs/`.  Remember, you're still on the internet.
+
+
+## Caveats
 
 Because writes to `/mfs` are hashed and stored directly into `ipfs files write`, importing the same file with different tools might create new ipfs blocks!
 
@@ -63,6 +74,7 @@ For best results, use `mbuffer` to standardize buffer sizes and improve performa
 wget "${URL}" -O- | mbuffer -s 128k -o /mfs/downloads/"${FILE}"
 ```
 
+
 ## Developer quick start
 
 ```bash
@@ -80,6 +92,7 @@ yarn global add ts-node
 DEBUG=* bin/mount.ipfs.ts /ipfs
 ```
 
+
 ## Performance
 
 #### Invariants
@@ -90,7 +103,7 @@ $ test_file=QmdeM51CMbTZfzJvRyGa9GEWapuZhNiHxzAv8NefgM2Hw4/vlc-2.2.8.tar.xz
 
 #### Benchmark go-ipfs 0.4.14
 
-The built-in `ipfs mount` is __really__ slow, which is the main reason this project exists.
+The built-in `ipfs mount` is __really__ slow, which is the first reason this project exists.
 
 ```
 $ ipfs mount
