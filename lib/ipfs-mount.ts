@@ -4,7 +4,7 @@ import { Path } from "./path"
 import * as fuse from "fuse-bindings"
 import { getOrAdd } from "./extensions"
 import { Mountable } from "./mount"
-import { ipfsCat } from "./ipfs-cat"
+import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
 const IpfsApi = require("ipfs-api")
 const debug = require("debug")("IpfsMount")
 
@@ -12,17 +12,13 @@ const debug = require("debug")("IpfsMount")
 export class IpfsMountable implements Mountable {
   constructor(
     private readonly ipfs: typeof IpfsApi,
-    fuseOptions: fuse.MountOptions = { },
-  ) {
-    this.fuseOptions = { displayFolder: false }
-    // caller's options override the defaults
-    this.fuseOptions = Object.assign(this.fuseOptions, fuseOptions)
-  }
-
-  private readonly fuseOptions: fuse.MountOptions
+    private readonly fuseOptions: fuse.MountOptions = { },
+  ) { }
 
   mount(root: Path) {
-    const mountOptions = Object.assign(new IpfsMount(this.ipfs), this.fuseOptions)
+    const reader = IpfsReader_Direct(this.ipfs)
+    // caller's options override the defaults
+    const mountOptions = Object.assign(new IpfsMount(this.ipfs, reader), this.fuseOptions)
     return new Promise((resolve, reject) =>
       fuse.mount(root, mountOptions,
         (err) => err ? reject(err) : resolve()
@@ -46,7 +42,9 @@ function errorToCode(err: any): number {
 }
 
 class IpfsMount implements fuse.MountOptions {
-  constructor(private readonly ipfs: typeof IpfsApi) { }
+  constructor(private readonly ipfs: typeof IpfsApi, private readonly reader: IpfsReader) { }
+
+  public displayFolder = false;
 
   private readonly firstAccessByPath = new Map<string, Date>();
 
@@ -156,8 +154,8 @@ class IpfsMount implements fuse.MountOptions {
 
     const ipfsPath = path.substring(1)
 
-    ipfsCat(this.ipfs, ipfsPath, buffer, { offset, length })
-      .then(result => reply(result.bytesCopied))
+    this.reader.read(ipfsPath, buffer, { offset, length })
+      .then(result => reply(result.length))
       .catch(bail)
   }
 }
