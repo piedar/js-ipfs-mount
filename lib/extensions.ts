@@ -1,3 +1,12 @@
+import { Readable, Writable } from "readable-stream"
+
+
+export function endOf(stream: Readable) {
+  return new Promise((resolve, reject) => {
+    stream.on("end", resolve)
+    stream.on("error", reject)
+  })
+}
 
 export function flatten<T>(arrays: T[][]): T[] {
   return [].concat.apply([], arrays);

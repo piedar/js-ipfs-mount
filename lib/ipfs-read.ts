@@ -1,4 +1,5 @@
 import { Readable, Writable } from "readable-stream"
+import { endOf } from "./extensions"
 const IpfsApi = require("ipfs-api")
 const debug = require("debug")("IpfsMount")
 
@@ -44,7 +45,7 @@ export function IpfsReader_ReadStream(ipfs: typeof IpfsApi): IpfsReader {
       }
 
       stream.on("data", chunk => {
-        debug({ chunk, chunkLength: chunk.length, position, capacity: buffer.byteLength })
+        debug("read stream", { length: chunk.length, position, capacity: buffer.byteLength })
 
         if (position >= segment.length) {
           // Calling stream.destroy() directly causes "Error: write after end".
@@ -55,28 +56,18 @@ export function IpfsReader_ReadStream(ipfs: typeof IpfsApi): IpfsReader {
           return
         }
 
-        let bytesWritten: number
+        const bytesWritten = typeof chunk === "string" ? buffer.write(chunk, position)
+                           : chunk.copy(buffer, position, 0, segment.length - position)
 
-        if (typeof chunk === "string") {
-          bytesWritten = buffer.write(chunk, position)
+        if (bytesWritten !== chunk.length) {
+          debug("fixme: bytesWritten mismatch", { bytesWritten, chunkLength: chunk.length })
         }
-        else {
-          bytesWritten = chunk.copy(buffer, position, 0, segment.length - position)
-        }
-
-        debug({ bytesWritten })
-        if (bytesWritten != chunk.length) debug("UH OH")
 
         position += bytesWritten
       })
 
-      const streamEnd = () => new Promise((resolve, reject) => {
-        stream.on("end", resolve)
-        stream.on("error", reject)
-      })
-
-      await streamEnd();
-      debug({ length: segment.length, position })
+      await endOf(stream);
+      debug("end of stream", { length: segment.length, position })
       return { offset: segment.offset, length: position }
     }
   }
