@@ -39,6 +39,11 @@ const rawTestCases: TestCase[] = [
     path: "/ipfs/QmW6vbhabbRUHxfR98cnnDp1m5DjPCsvzZiowh4FbRZPAv",
     expectedBuffer: readFileAsync("/usr/portage/distfiles/vlc-2.2.8.tar.xz"),
   },
+  {
+    name: "warzone2100-3.2.3.tar.xz",
+    path: "/ipfs/Qma9qqDVkh3MtDju7kGXCisposEfzqohvi53NkrKqSmjb2",
+    expectedBuffer: readFileAsync("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz"),
+  },
 ]
 
 const testCases = rawTestCases
@@ -71,7 +76,7 @@ for (const { name, reader } of readers) {
 
         const leftover = buffer.slice(result.length)
         expect(leftover).to.deep.equal(new Buffer(leftover.byteLength), "overflow into empty bytes!")
-      })
+      }).timeout(5000)
     }
   })
 }
