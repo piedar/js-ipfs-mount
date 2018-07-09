@@ -10,10 +10,20 @@ const readFileAsync = promisify(fs.readFile)
 type TestCase = {
   readonly name: string,
   readonly path: string,
+  readonly offset?: number,
   readonly expectedBuffer: Readonly<Buffer> | Promise<Readonly<Buffer>>,
 }
 
-const testCases: TestCase[] = [
+function withOffset(source: TestCase, offset: number): TestCase {
+  return {
+    name: `${source.name} + ${offset}`,
+    path: source.path,
+    offset: (source.offset || 0) + offset,
+    expectedBuffer: Promise.resolve(source.expectedBuffer).then(buffer => buffer.slice(offset))
+  }
+}
+
+const rawTestCases: TestCase[] = [
   {
     name: "empty",
     path: "/ipfs/QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH",
@@ -31,6 +41,11 @@ const testCases: TestCase[] = [
   },
 ]
 
+const testCases = rawTestCases
+  .concat(rawTestCases.map(tc => withOffset(tc, 1)))
+  .concat(rawTestCases.map(tc => withOffset(tc, 4096)))
+  .sort((a, b) => a.name.localeCompare(b.name))
+
 
 const ipfs = new IpfsApi()
 const readers = [
@@ -46,7 +61,7 @@ for (const { name, reader } of readers) {
 
         // use longer buffer to test for overflow
         const buffer = new Buffer(expectedBuffer.byteLength + 4)
-        const segment = { offset: 0, length: buffer.byteLength }
+        const segment = { offset: testCase.offset || 0, length: buffer.byteLength }
         const result = await reader.read(testCase.path, buffer, segment)
 
         expect(result.offset).to.deep.equal(segment.offset)
