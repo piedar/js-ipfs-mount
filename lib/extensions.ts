@@ -1,4 +1,4 @@
-import { Readable, Writable } from "readable-stream"
+import { Readable, Writable } from "stream"
 
 
 export function endOf(stream: Readable) {

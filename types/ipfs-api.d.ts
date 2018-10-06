@@ -1,6 +1,6 @@
 
 declare module "ipfs-api" {
-  import { Readable, Writable } from "readable-stream"
+  import { Readable, Writable } from "stream"
 
   module IpfsApi {
     type Segment = {
