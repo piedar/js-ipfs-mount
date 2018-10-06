@@ -1,4 +1,5 @@
 import * as fs from "fs"
+import * as path from "path"
 import * as IpfsApi from "ipfs-api"
 import { expect } from "chai"
 import { describe, it } from "mocha"
@@ -18,7 +19,7 @@ function detach<T>(promise: Promise<T>): Promise<T | undefined> {
 
 type TestCase = {
   readonly name: string,
-  readonly path: string,
+  readonly ipfsPath: string,
   readonly offset?: number,
   readonly expectedBuffer: Readonly<Buffer> | Promise<Readonly<Buffer> | undefined>,
 }
@@ -26,33 +27,37 @@ type TestCase = {
 function withOffset(source: TestCase, offset: number): TestCase {
   return {
     name: `${source.name} + ${offset}`,
-    path: source.path,
+    ipfsPath: source.ipfsPath,
     offset: (source.offset || 0) + offset,
     expectedBuffer: Promise.resolve(source.expectedBuffer).then(buffer => buffer && buffer.slice(offset))
+  }
+}
+
+function shouldMatch(expectedFile: string, ipfsPath: string): TestCase {
+  return {
+    name: path.parse(expectedFile).base,
+    ipfsPath: ipfsPath,
+    expectedBuffer: detach(readFileAsync(expectedFile)),
   }
 }
 
 const rawTestCases: TestCase[] = [
   {
     name: "empty",
-    path: "/ipfs/QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH",
+    ipfsPath: "/ipfs/QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH",
     expectedBuffer: new Buffer(0),
   },
   {
     name: "hello",
-    path: "/ipfs/QmZULkCELmmk5XNfCgTnCyFgAVxBRBXyDHGGMVoLFLiXEN",
+    ipfsPath: "/ipfs/QmZULkCELmmk5XNfCgTnCyFgAVxBRBXyDHGGMVoLFLiXEN",
     expectedBuffer: new Buffer("hello\n"),
   },
-  {
-    name: "vlc-2.2.8.tar.xz",
-    path: "/ipfs/QmW6vbhabbRUHxfR98cnnDp1m5DjPCsvzZiowh4FbRZPAv",
-    expectedBuffer: detach(readFileAsync("/usr/portage/distfiles/vlc-2.2.8.tar.xz")),
-  },
-  {
-    name: "warzone2100-3.2.3.tar.xz",
-    path: "/ipfs/Qma9qqDVkh3MtDju7kGXCisposEfzqohvi53NkrKqSmjb2",
-    expectedBuffer: detach(readFileAsync("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz")),
-  },
+
+  shouldMatch("/usr/portage/distfiles/vlc-2.2.8.tar.xz", "/ipfs/QmW6vbhabbRUHxfR98cnnDp1m5DjPCsvzZiowh4FbRZPAv"),
+  shouldMatch("/usr/portage/distfiles/vlc-3.0.3.tar.xz", "/ipfs/QmW11F8rMWUENsR5DamNotJofZRjeD1NoAt6R7Y5uZunTB"),
+  shouldMatch("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz", "/ipfs/Qma9qqDVkh3MtDju7kGXCisposEfzqohvi53NkrKqSmjb2"),
+  shouldMatch("/usr/share/wesnoth/data/core/music/silence.ogg", "/ipfs/QmXNJ8c1UJsMSza5zGXFp31ZxTiXwDajgA94Qusg7dCPZX"),
+  shouldMatch("/usr/share/wesnoth/data/core/music/battle.ogg", "/ipfs/QmQdktw4UY5oVYBuErqiABCSyuMa5qjRF6buFRzaQfUbq4"),
 ]
 
 const testCases = rawTestCases
@@ -80,7 +85,7 @@ for (const { name, reader } of readers) {
         // use longer buffer to test for overflow
         const buffer = new Buffer(expectedBuffer.byteLength + 4)
         const segment = { offset: testCase.offset || 0, length: buffer.byteLength }
-        const result = await reader.read(testCase.path, buffer, segment)
+        const result = await reader.read(testCase.ipfsPath, buffer, segment)
 
         expect(result.offset).to.deep.equal(segment.offset)
 
