@@ -1,17 +1,17 @@
 import * as util from "util"
 import * as fs from "fs"
-import { Path } from "./path"
+import * as IpfsApi from "ipfs-api"
 import * as fuse from "fuse-bindings"
+import { Path } from "./path"
 import { getOrAdd } from "./extensions"
 import { Mountable } from "./mount"
 import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
-const IpfsApi = require("ipfs-api")
 const debug = require("debug")("IpfsMount")
 
 
 export class IpfsMountable implements Mountable {
   constructor(
-    private readonly ipfs: typeof IpfsApi,
+    private readonly ipfs: IpfsApi,
     private readonly fuseOptions: fuse.MountOptions = { },
   ) { }
 
@@ -42,7 +42,7 @@ function errorToCode(err: any): number {
 }
 
 class IpfsMount implements fuse.MountOptions {
-  constructor(private readonly ipfs: typeof IpfsApi, private readonly reader: IpfsReader) { }
+  constructor(private readonly ipfs: IpfsApi, private readonly reader: IpfsReader) { }
 
   public displayFolder = false;
 
@@ -132,7 +132,7 @@ class IpfsMount implements fuse.MountOptions {
     const ipfsPath = path === "/" ? path : "/ipfs"+path
 
     this.ipfs.ls(ipfsPath)
-      .then((files: IpfsFileListing[]) => reply(0,
+      .then((files) => reply(0,
         files.filter(file => file.depth === 1).map(file => file.name)))
       .catch((err: any) => bail(err, "ipfs ls"))
   }
@@ -158,14 +158,4 @@ class IpfsMount implements fuse.MountOptions {
       .then(result => reply(result.length))
       .catch(bail)
   }
-}
-
-
-type IpfsFileListing = {
-  depth: number,
-  name: string,
-  path: string,
-  size: number,
-  hash: string,
-  type: "file" | "directory",
 }

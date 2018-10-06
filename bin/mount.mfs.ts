@@ -6,7 +6,6 @@ import { flatten } from "../lib/extensions"
 import { MfsMountable } from "../lib/mfs-mount"
 import { done } from "../lib/signals"
 import { version } from "../lib/version"
-const IpfsApi = require("ipfs-api")
 
 
 const targetDefault = "/mfs"

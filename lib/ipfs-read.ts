@@ -1,26 +1,16 @@
-import { Readable, Writable } from "readable-stream"
+import * as IpfsApi from "ipfs-api"
 import { endOf } from "./extensions"
-const IpfsApi = require("ipfs-api")
 const debug = require("debug")("IpfsMount")
 
 
-type ReadResult = {
-  bytesCopied: number
-}
-
-type Segment = {
-  offset: number
-  length: number
-}
-
 export type IpfsReader = {
-  read: (path: string, buffer: Buffer, segment: Segment) => Promise<Segment>
+  read: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<IpfsApi.Segment>
 }
 
-export function IpfsReader_Direct(ipfs: typeof IpfsApi): IpfsReader {
+export function IpfsReader_Direct(ipfs: IpfsApi): IpfsReader {
   return {
     read: async (path, buffer, segment) => {
-      const file: Buffer = await ipfs.cat(path, segment);
+      const file = await ipfs.cat(path, segment);
 
       let fileOffset = 0
       if (file.byteLength > segment.length) {
@@ -34,11 +24,11 @@ export function IpfsReader_Direct(ipfs: typeof IpfsApi): IpfsReader {
   }
 }
 
-export function IpfsReader_ReadStream(ipfs: typeof IpfsApi): IpfsReader {
+export function IpfsReader_ReadStream(ipfs: IpfsApi): IpfsReader {
   return {
     read: async (path, buffer, segment) => {
       let position = 0
-      const stream: Readable = ipfs.catReadableStream(path, segment)
+      const stream = ipfs.catReadableStream(path, segment)
 
       if (stream.readableLength !== segment.length) {
         debug("fixme: ipfs.catReadableStream() ignored ", { segment }, " and returned ", { offset: 0, length: stream.readableLength })

@@ -1,9 +1,9 @@
 import * as util from "util";
 import * as fuse from "fuse-bindings"
+import * as IpfsApi from "ipfs-api"
 import { Path } from "./path";
 import { Mountable } from "./mount"
 const debug = require("debug")("MfsMountable")
-const IpfsApi = require("ipfs-api")
 const FuseMfs = require("ipfs-fuse");
 
 
@@ -32,7 +32,7 @@ export class MfsMountable implements Mountable {
   }
 }
 
-function MfsMount(ipfs: typeof IpfsApi, writer: MfsWriter): fuse.MountOptions {
+function MfsMount(ipfs: IpfsApi, writer: MfsWriter): fuse.MountOptions {
   const start = Date.now()
 
   return {
@@ -122,7 +122,7 @@ type MfsWriter = {
   flush: (path: string) => Promise<void>
 }
 
-function MfsWriter_Direct(ipfs: typeof IpfsApi): MfsWriter {
+function MfsWriter_Direct(ipfs: IpfsApi): MfsWriter {
   return {
     write: (path: string, buffer: Buffer, offset: number, count: number) => {
       return ipfs.files.write(path, buffer, { offset: offset, count: count, flush: false })

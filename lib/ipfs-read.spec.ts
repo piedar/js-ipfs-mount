@@ -1,9 +1,9 @@
 import * as fs from "fs"
+import * as IpfsApi from "ipfs-api"
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import { promisify } from "util"
 import { IpfsReader, IpfsReader_Direct, IpfsReader_ReadStream } from "./ipfs-read"
-const IpfsApi = require("ipfs-api")
 const readFileAsync = promisify(fs.readFile)
 
 

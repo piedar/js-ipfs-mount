@@ -1,12 +1,12 @@
 #!/usr/bin/env ts-node
 
 import * as command from "commander"
+import * as IpfsApi from "ipfs-api"
 import * as mount from "../lib/mount"
 import { flatten } from "../lib/extensions"
 import { IpfsMountable } from "../lib/ipfs-mount"
 import { done } from "../lib/signals"
 import { version } from "../lib/version"
-const IpfsApi = require("ipfs-api")
 
 
 const targetDefault = "/ipfs"
