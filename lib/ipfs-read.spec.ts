@@ -7,11 +7,20 @@ import { IpfsReader, IpfsReader_Direct, IpfsReader_ReadStream } from "./ipfs-rea
 const readFileAsync = promisify(fs.readFile)
 
 
+/// returns the result of a successful promise, or undefined if an error occurs
+/// workaround for PromiseRejectionHandledWarning: Promise rejection was handled asynchronously
+function detach<T>(promise: Promise<T>): Promise<T | undefined> {
+  return promise.catch(err => {
+    console.log({ detached: err })
+    return undefined
+  })
+}
+
 type TestCase = {
   readonly name: string,
   readonly path: string,
   readonly offset?: number,
-  readonly expectedBuffer: Readonly<Buffer> | Promise<Readonly<Buffer>>,
+  readonly expectedBuffer: Readonly<Buffer> | Promise<Readonly<Buffer> | undefined>,
 }
 
 function withOffset(source: TestCase, offset: number): TestCase {
@@ -19,7 +28,7 @@ function withOffset(source: TestCase, offset: number): TestCase {
     name: `${source.name} + ${offset}`,
     path: source.path,
     offset: (source.offset || 0) + offset,
-    expectedBuffer: Promise.resolve(source.expectedBuffer).then(buffer => buffer.slice(offset))
+    expectedBuffer: Promise.resolve(source.expectedBuffer).then(buffer => buffer && buffer.slice(offset))
   }
 }
 
@@ -37,12 +46,12 @@ const rawTestCases: TestCase[] = [
   {
     name: "vlc-2.2.8.tar.xz",
     path: "/ipfs/QmW6vbhabbRUHxfR98cnnDp1m5DjPCsvzZiowh4FbRZPAv",
-    expectedBuffer: readFileAsync("/usr/portage/distfiles/vlc-2.2.8.tar.xz"),
+    expectedBuffer: detach(readFileAsync("/usr/portage/distfiles/vlc-2.2.8.tar.xz")),
   },
   {
     name: "warzone2100-3.2.3.tar.xz",
     path: "/ipfs/Qma9qqDVkh3MtDju7kGXCisposEfzqohvi53NkrKqSmjb2",
-    expectedBuffer: readFileAsync("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz"),
+    expectedBuffer: detach(readFileAsync("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz")),
   },
 ]
 
@@ -61,8 +70,12 @@ const readers = [
 for (const { name, reader } of readers) {
   describe(name, () => {
     for (const testCase of testCases) {
-      it(testCase.name, async () => {
+      it(testCase.name, async function (this) {
         const expectedBuffer = await testCase.expectedBuffer
+        if (!expectedBuffer) {
+          this.skip()
+          return
+        }
 
         // use longer buffer to test for overflow
         const buffer = new Buffer(expectedBuffer.byteLength + 4)
