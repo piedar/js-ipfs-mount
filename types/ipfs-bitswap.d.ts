@@ -20,7 +20,7 @@ declare module "ipfs-bitswap" {
     constructor(libp2p: Libp2p, blockstore: Blockstore, options?: BitswapOptions);
 
     readonly peerInfo: any;
-    
+
     enableStats(): void;
     distableStats(): void;
     wantlistForPeer(peerId: PeerId): Wantlist;

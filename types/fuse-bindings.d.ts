@@ -24,28 +24,28 @@ declare module 'fuse-bindings' {
 
 		/**
 		 * Called on filesystem init.
-		 * @param cb 
+		 * @param cb
 		 */
 		init?(cb: (code: number) => void): void;
 
 		/**
 		 * Called before the filesystem accessed a file.
-		 * @param path 
-		 * @param mode 
-		 * @param cb 
+		 * @param path
+		 * @param mode
+		 * @param cb
 		 */
 		access?(path: string, mode: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when the filesystem is being stat'ed.
-		 * @param path 
+		 * @param path
 		 * @param cb accepts a fs stat object after the return code.
 		 */
 		statfs?(path: string, cb: (code: number, fsStat: FSStat) => void): void;
 
 		/**
-		 * Called when a path is being stat'ed. 
-		 * @param path 
+		 * Called when a path is being stat'ed.
+		 * @param path
 		 * @param cb accepts a stat object (similar to the one returned in fs.stat
 		 * path, cb)) after the return code.
 		 */
@@ -53,44 +53,44 @@ declare module 'fuse-bindings' {
 
 		/**
 		 * Called when a file descriptor is being stat'ed. Similar to getattr().
-		 * @param path 
-		 * @param fd 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param cb
 		 */
 		fgetattr?(path: string, fd: number,
 			cb: (code: number, stats: Stats) => void): void;
 
 		/**
 		 * Called when a file descriptor is being flushed.
-		 * @param path 
-		 * @param fd 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param cb
 		 */
 		flush?(path: string, fd: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a file descriptor is being fsync'ed.
-		 * @param path 
-		 * @param fd 
-		 * @param datasync 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param datasync
+		 * @param cb
 		 */
 		fsync?(path: string, fd: number, datasync: any,
 			cb: (code: number) => void): void;
-		
+
 		/**
 		 * Called when a folder descriptor is being fsync'ed. Similar to fsync().
-		 * @param path 
-		 * @param fd 
-		 * @param datasync 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param datasync
+		 * @param cb
 		 */
 		fsyncdir?(path: string, fd: number, datasync: any,
 			cb: (code: number) => void): void;
 
 		/**
 		 * Called when a directory is being listed.
-		 * @param path 
+		 * @param path
 		 * @param cb accepts an array of file/directory names after the return
 		 * code.
 		 */
@@ -98,56 +98,56 @@ declare module 'fuse-bindings' {
 
 		/**
 		 * Called when a path is being truncated to a specific size.
-		 * @param path 
-		 * @param size 
-		 * @param cb 
+		 * @param path
+		 * @param size
+		 * @param cb
 		 */
 		truncate?(path: string, size: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a file via descriptor is being truncated to a specific
 		 * size. Similar to truncate().
-		 * @param path 
-		 * @param fd 
-		 * @param size 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param size
+		 * @param cb
 		 */
 		ftruncate?(path: string, fd: number, size: number,
 			cb: (code: number) => void): void;
-		
+
 		/**
 		 * Called when a symlink is being resolved.
-		 * @param path 
+		 * @param path
 		 * @param cb accepts a pathname (that the link should resolve to) after
 		 * the return code.
 		 */
 		readlink?(path: string,
 			cb: (code: number, targetPathname: string) => void): void;
-		
+
 		/**
 		 * Called when ownership of a path is being changed.
-		 * @param path 
-		 * @param uid 
-		 * @param gid 
-		 * @param cb 
+		 * @param path
+		 * @param uid
+		 * @param gid
+		 * @param cb
 		 */
 		chown?(path: string, uid: number, gid: number,
 			cb: (code: number) => void): void;
-		
+
 		/**
 		 * Called when the mode of a path is being changed.
-		 * @param path 
-		 * @param mode 
-		 * @param cb 
+		 * @param path
+		 * @param mode
+		 * @param cb
 		 */
 		chmod?(path: string, mode: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when the a new device file is being made.
-		 * @param path 
-		 * @param mode 
-		 * @param dev 
-		 * @param cb 
+		 * @param path
+		 * @param mode
+		 * @param dev
+		 * @param cb
 		 */
 		mknod?(path: string, mode: number, dev: number,
 			cb: (code: number) => void): void;
@@ -156,38 +156,38 @@ declare module 'fuse-bindings' {
 		 * Called when extended attributes is being set (see the extended docs
 		 * for your platform). Currently you can read the attribute value being
 		 * set in buffer at offset.
-		 * @param path 
-		 * @param name 
-		 * @param buffer 
-		 * @param length 
-		 * @param offset 
-		 * @param flags 
-		 * @param cb 
+		 * @param path
+		 * @param name
+		 * @param buffer
+		 * @param length
+		 * @param offset
+		 * @param flags
+		 * @param cb
 		 */
 		setxattr?(path: string, name: string, buffer: Buffer, length: number,
 			offset: number, flags: number, cb: (code: number) => void): void;
-		
+
 		/**
 		 * Called when extended attributes is being read. Currently you have to
 		 * write the result to the provided buffer at offset.
-		 * @param path 
-		 * @param name 
-		 * @param buffer 
-		 * @param length 
-		 * @param offset 
-		 * @param cb 
+		 * @param path
+		 * @param name
+		 * @param buffer
+		 * @param length
+		 * @param offset
+		 * @param cb
 		 */
 		getxattr?(path: string, name: string, buffer: Buffer, length: number,
 			offset: number, cb: (code: number) => void): void;
-		
+
 		/**
 		 * Called when extended attributes of a path are being listed.
-		 * @param path 
+		 * @param path
 		 * @param buffer should be filled with the extended attribute names as
 		 * null-terminated strings, one after the other, up to a total of length
 		 * in length. (ERANGE should be passed to the callback if length is
 		 * insufficient.)
-		 * @param length 
+		 * @param length
 		 * @param cb The size of buffer required to hold all the names should be
 		 * passed to the callback either on success, or if the supplied length
 		 * was zero.
@@ -197,57 +197,57 @@ declare module 'fuse-bindings' {
 
 		/**
 		 * Called when an extended attribute is being removed.
-		 * @param path 
-		 * @param name 
-		 * @param cb 
+		 * @param path
+		 * @param name
+		 * @param cb
 		 */
 		removexattr?(path: string, name: string, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a path is being opened.
-		 * @param path 
+		 * @param path
 		 * @param flags in a number containing the permissions being requested.
 		 * @param cb accepts a file descriptor after the return code.
 		 */
 		open?(path: string, flags: number,
 			cb: (code: number, fd: number) => void): void;
 
-		
+
 		/**
 		 * Called when a path is being opened. Similar to open(), but for
 		 * directories.
-		 * @param path 
+		 * @param path
 		 * @param flags in a number containing the permissions being requested.
 		 * @param cb accepts a file descriptor after the return code.
 		 */
 		opendir?(path: string, flags: number,
 			cb: (code: number, fd: number) => void): void;
-		
+
 		/**
 		 * Called when contents of a file is being read. You should write the
 		 * result of the read to the buffer and return the number of bytes
 		 * written as the first argument in the callback. If no bytes were
 		 * written (read is complete) return 0 in the callback.
-		 * @param path 
-		 * @param fd 
-		 * @param buffer 
-		 * @param length 
-		 * @param position 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param buffer
+		 * @param length
+		 * @param position
+		 * @param cb
 		 */
 		read?(path: string, fd: number, buffer: Buffer, length: number,
 			position: number, cb: (bytesReadOrErr: number) => void): void;
-		
+
 		/**
 		 * Called when a file is being written to. You can get the data being
 		 * written in buffer and you should return the number of bytes written in
 		 * the callback as the first argument.
-		 * @param path 
-		 * @param fd 
-		 * @param buffer 
-		 * @param length 
-		 * @param position 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param buffer
+		 * @param length
+		 * @param position
+		 * @param cb
 		 */
 		write?(path: string, fd: number, buffer: Buffer, length: number,
 			position: number, cb: (bytesWrittenOrErr: number) => void): void;
@@ -255,82 +255,82 @@ declare module 'fuse-bindings' {
 		/**
 		 * Called when a file descriptor is being released. Happens when a
 		 * read/write is done etc.
-		 * @param path 
-		 * @param fd 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param cb
 		 */
 		release?(path: string, fd: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a directory's file descriptor is being released. Similar
 		 * to release().
-		 * @param path 
-		 * @param fd 
-		 * @param cb 
+		 * @param path
+		 * @param fd
+		 * @param cb
 		 */
 		releasedir?(path: string, fd: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a new file is being opened.
-		 * @param path 
-		 * @param mode 
-		 * @param cb 
+		 * @param path
+		 * @param mode
+		 * @param cb
 		 */
 		create?(path: string, mode: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when the atime/mtime of a file is being changed.
-		 * @param path 
-		 * @param atime 
-		 * @param mtime 
-		 * @param cb 
+		 * @param path
+		 * @param atime
+		 * @param mtime
+		 * @param cb
 		 */
 		utimens?(path: string, atime: number, mtime: number,
 			cb: (code: number) => void): void;
-		
+
 		/**
 		 * Called when a file is being unlinked.
-		 * @param path 
-		 * @param cb 
+		 * @param path
+		 * @param cb
 		 */
 		unlink?(path: string, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a file is being renamed.
-		 * @param src 
-		 * @param dest 
-		 * @param cb 
+		 * @param src
+		 * @param dest
+		 * @param cb
 		 */
 		rename?(src: string, dest: string, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a new link is created.
-		 * @param path 
-		 * @param target 
-		 * @param cb 
+		 * @param path
+		 * @param target
+		 * @param cb
 		 */
 		link?(path: string, target: string, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a new symlink is created.
-		 * @param path 
-		 * @param target 
-		 * @param cb 
+		 * @param path
+		 * @param target
+		 * @param cb
 		 */
 		symlink?(path: string, target: string, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a new directory is being created.
-		 * @param path 
-		 * @param mode 
-		 * @param cb 
+		 * @param path
+		 * @param mode
+		 * @param cb
 		 */
 		mkdir?(path: string, mode: number, cb: (code: number) => void): void;
 
 		/**
 		 * Called when a directory is being removed.
-		 * @param path 
-		 * @param cb 
+		 * @param path
+		 * @param cb
 		 */
 		rmdir?(path: string, cb: (code: number) => void): void;
 

@@ -17,7 +17,7 @@ interface IpfsRepoOptions {
     },
     keys: any
   }
-} 
+}
 
 declare module "ipfs-repo" {
   class IpfsRepo {
