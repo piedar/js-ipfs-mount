@@ -40,8 +40,16 @@ declare module "ipfs-api" {
     cat(path: string, segment: IpfsApi.Segment): Promise<Buffer>
     catReadableStream(path: string, segment: IpfsApi.Segment): Readable
 
-    // todo
-    files: any
+    // todo: incomplete
+    files: {
+      stat: (path: string) => Promise<any>,
+      write: (
+        path: string,
+        buffer: Buffer,
+        options: { offset: number, count: number, flush: boolean },
+      ) => Promise<void>,
+      flush: (path: string) => Promise<void>,
+    }
   }
 
   export = IpfsApi

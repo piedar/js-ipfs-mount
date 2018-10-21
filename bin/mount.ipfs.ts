@@ -46,5 +46,5 @@ const ipfsOptions = { }
 const ipfs = new IpfsApi(ipfsOptions)
 const fuseOptions = { displayFolder: false, options: options }
 
-mount.untilDone(new IpfsMountable(ipfs, fuseOptions), target, done)
+mount.untilDone(IpfsMountable(ipfs, fuseOptions), target, done)
   .catch(console.log)

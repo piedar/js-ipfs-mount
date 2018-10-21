@@ -1,7 +1,6 @@
 import * as util from "util";
 import * as fuse from "fuse-bindings"
 import * as IpfsApi from "ipfs-api"
-import { Path } from "./path";
 import { Mountable } from "./mount"
 const debug = require("debug")("MfsMountable")
 const FuseMfs = require("ipfs-fuse");
@@ -10,25 +9,25 @@ const FuseMfs = require("ipfs-fuse");
 const mountAsync = util.promisify(FuseMfs.mount);
 const unmountAsync = util.promisify(FuseMfs.unmount);
 
-export class MfsMountable implements Mountable {
-  constructor(
-    private readonly ipfsOptions = { },
-    fuseOptions: fuse.MountOptions = { },
-  ) {
-    const ipfs = new IpfsApi(ipfsOptions)
-    const writer = MfsWriter_Direct(ipfs)
-    // caller's options override the defaults
-    this.fuseOptions = Object.assign(MfsMount(ipfs, writer), fuseOptions)
-  }
 
-  private readonly fuseOptions: fuse.MountOptions
+export function MfsMountable(
+  ipfsOptions: IpfsApi.Options = { },
+  extraFuseOptions: fuse.MountOptions = { },
+): Mountable {
 
-  mount(root: Path) {
-    return mountAsync(root, { ipfs: this.ipfsOptions, fuse: this.fuseOptions })
-  }
+  const ipfs = new IpfsApi(ipfsOptions)
 
-  unmount(root: Path) {
-    return unmountAsync(root)
+  return {
+    mount: (root: string) => {
+      const writer = MfsWriter_Direct(ipfs)
+      const fuseOptions = {
+        ...MfsMount(ipfs, writer),
+        ...extraFuseOptions,
+      }
+      return mountAsync(root, { ipfs: ipfsOptions, fuse: fuseOptions })
+    },
+
+    unmount: (root: string) => unmountAsync(root),
   }
 }
 
@@ -62,34 +61,34 @@ function MfsMount(ipfs: IpfsApi, writer: MfsWriter): fuse.MountOptions {
         return cb(err, undefined!)
       }
 
-      ipfs.files.stat(path, (err: any, stat: any) => {
-        if (err) {
-          const errno = err.message === 'file does not exist' ? fuse.ENOENT
+      ipfs.files.stat(path)
+        .then((ipfsStat: any) => {
+          // blksize is vital for write performance
+          // todo: wget and curl max out at 8192?
+
+          // todo: mtime, atime, ctime are wrong
+          // might get weird results when using auto_cache
+          const now = Date.now()
+
+          reply({
+            blksize: 256 * 1024,
+
+            mtime: now,
+            atime: now,
+            ctime: now,
+            nlink: 1,
+            size: ipfsStat.size,
+            // https://github.com/TooTallNate/stat-mode/blob/master/index.js
+            mode: ipfsStat.type === 'directory' ? 16877 : 33188,
+            uid: process.getuid ? process.getuid() : 0,
+            gid: process.getgid ? process.getgid() : 0
+          } as any)
+        })
+        .catch((err: any) => {
+          const errno = err && err.message === 'file does not exist' ? fuse.ENOENT
                       : fuse.EREMOTEIO;
           return bail(errno, err)
-        }
-
-        // blksize is vital for write performance
-        // todo: wget and curl max out at 8192?
-
-        // todo: mtime, atime, ctime are wrong
-        // might get weird results when using auto_cache
-        const now = Date.now()
-
-        reply({
-          blksize: 256 * 1024,
-
-          mtime: now,
-          atime: now,
-          ctime: now,
-          nlink: 1,
-          size: stat.size,
-          // https://github.com/TooTallNate/stat-mode/blob/master/index.js
-          mode: stat.type === 'directory' ? 16877 : 33188,
-          uid: process.getuid ? process.getuid() : 0,
-          gid: process.getgid ? process.getgid() : 0
-        } as any)
-      })
+        })
     },
 
     write: (path, fd, buf, len, pos, reply) => {

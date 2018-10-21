@@ -2,37 +2,38 @@ import * as util from "util"
 import * as fs from "fs"
 import * as IpfsApi from "ipfs-api"
 import * as fuse from "fuse-bindings"
-import { Path } from "./path"
 import { getOrAdd } from "./extensions"
 import { Mountable } from "./mount"
 import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
 const debug = require("debug")("IpfsMount")
 
 
-export class IpfsMountable implements Mountable {
-  constructor(
-    private readonly ipfs: IpfsApi,
-    private readonly fuseOptions: fuse.MountOptions = { },
-  ) { }
+export function IpfsMountable(
+  ipfs: IpfsApi,
+  extraFuseOptions: fuse.MountOptions = { },
+): Mountable {
 
-  mount(root: Path) {
-    const reader = IpfsReader_Direct(this.ipfs)
-    // caller's options override the defaults
-    const mountOptions = Object.assign(new IpfsMount(this.ipfs, reader), this.fuseOptions)
-    return new Promise((resolve, reject) =>
-      fuse.mount(root, mountOptions,
-        (err) => err ? reject(err) : resolve()
-    ));
-  }
+  return {
+    mount: (root: string) => {
+      const reader = IpfsReader_Direct(ipfs)
+      const mountOptions = {
+        ...new IpfsMount(ipfs, reader),
+        ...extraFuseOptions,
+      }
+      return new Promise((resolve, reject) =>
+        fuse.mount(root, mountOptions,
+          (err) => err ? reject(err) : resolve()
+      ));
+    },
 
-  unmount(root: Path) {
-    return new Promise((resolve, reject) =>
-      fuse.unmount(root,
-        (err) => err ? reject(err) : resolve()
-    ));
+    unmount: (root: string) => {
+      return new Promise((resolve, reject) =>
+        fuse.unmount(root,
+          (err) => err ? reject(err) : resolve()
+      ));
+    },
   }
 }
-
 
 function errorToCode(err: any): number {
   return typeof err === "number" ? err
