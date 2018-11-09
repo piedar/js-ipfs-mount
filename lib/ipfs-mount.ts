@@ -17,7 +17,7 @@ export function IpfsMountable(
     mount: (root: string) => {
       const reader = IpfsReader_Direct(ipfs)
       const mountOptions = {
-        ...new IpfsMount(ipfs, reader),
+        ...IpfsMount(ipfs, reader),
         ...extraFuseOptions,
       }
       return new Promise((resolve, reject) =>
@@ -42,83 +42,85 @@ function errorToCode(err: any): number {
        : -1;
 }
 
-class IpfsMount implements fuse.MountOptions {
-  constructor(private readonly ipfs: IpfsApi, private readonly reader: IpfsReader) { }
 
-  public displayFolder = false;
+function IpfsMount(
+  ipfs: IpfsApi,
+  reader: IpfsReader,
+): fuse.MountOptions {
 
-  private readonly firstAccessByPath = new Map<string, Date>();
+  const firstAccessByPath = new Map<string, Date>()
 
-  readonly create = (path: string, mode: number, reply: (err: number) => void) => {
-    return reply(fuse.EROFS)
-  }
+  return {
+    displayFolder: false,
 
-  readonly open = (path: string, flags: number, cb: (code: number, fd: number) => void) => {
-    debug("open " + path)
-    return cb(0, 22)
-  }
+    create: (path, mode, reply) => reply(fuse.EROFS),
 
-  readonly opendir = (path: string, flags: number, cb: (code: number, fd: number) => void) => {
-    debug("opendir " + path)
-    if (path === "/") return cb(fuse.EPERM, -1)
-    return cb(0, 22)
-  }
+    open: (path, flags, reply) => {
+      debug("open " + path)
+      return reply(0, 22)
+    },
 
-  //readonly statfs = (path: string, cb: (code: number, fsStat: fuse.FSStat) => void) => {
-  //  debug("statfs " + path)
-  //}
+    opendir: (path, flags, reply) => {
+      debug("opendir " + path)
+      if (path === "/") return reply(fuse.EPERM, -1)
+      return reply(0, -1)
+    },
 
-  readonly getattr = (path: string, cb: (code: number, stats: fuse.Stats) => void) => {
-    const reply = (code: number, stats: fuse.Stats) => {
-      debug({ stats });
-      cb(code, stats)
-    }
-    const bail = (err: any, reason?: any) => {
-      debug({ err, reason });
-      reply(errorToCode(err), undefined!)
-    }
+    //statfs: (path, reply) => {
+    //  debug("statfs " + path)
+    //},
 
-    const now = new Date(Date.now())
-    const firstAccess = getOrAdd(this.firstAccessByPath, path, now)
+    getattr: (path, cb) => {
+      const reply = (code: number, stats: fuse.Stats) => {
+        debug({ code, stats })
+        cb(code, stats)
+      }
+      const bail = (err: any, reason?: any) => {
+        debug({ err, reason })
+        reply(errorToCode(err), undefined!)
+      }
 
-    let stats = {
-      dev: 0,
-      ino: 0,
-      size: 0,
-      mode: 0,
-      nlink: 0,
-      uid: process.getuid ? process.getuid() : 0,
-      gid: process.getgid ? process.getgid() : 0,
-      rdev: 0,
-      blksize: 0,
-      blocks: 0,
-      ctime: firstAccess,
-      mtime: firstAccess,
-      atime: now,
-    }
+      const now = new Date(Date.now())
+      const firstAccess = getOrAdd(firstAccessByPath, path, now)
 
-    const ipfsPath = path === "/" ? path : "/ipfs/"+path
+      let stats = {
+        dev: 0,
+        ino: 0,
+        size: 0,
+        mode: 0,
+        nlink: 0,
+        uid: process.getuid ? process.getuid() : 0,
+        gid: process.getgid ? process.getgid() : 0,
+        rdev: 0,
+        blksize: 0,
+        blocks: 0,
+        ctime: firstAccess,
+        mtime: firstAccess,
+        atime: now,
+      }
 
-    this.ipfs.files.stat(ipfsPath)
-      .then((ipfsStat: any) => {
-        debug({ ipfsStat })
+      const ipfsPath = path === "/" ? path : "/ipfs/"+path
 
-        const [filetype, permissions] =
-          ipfsStat.type === "directory" ? [fs.constants.S_IFDIR, 0o111] :
-          ipfsStat.type === "file"      ? [fs.constants.S_IFREG, 0o444] :
-                                          [0, 0o000]
-        stats = Object.assign(stats, {
-          size: ipfsStat.size,
-          nlink: 1,
-          mode: filetype | permissions
+      ipfs.files.stat(ipfsPath)
+        .then((ipfsStat: any) => {
+          debug({ ipfsStat })
+
+          const [filetype, permissions] =
+            ipfsStat.type === "directory" ? [fs.constants.S_IFDIR, 0o111] :
+            ipfsStat.type === "file"      ? [fs.constants.S_IFREG, 0o444] :
+                                            [0, 0o000]
+          stats = Object.assign(stats, {
+            size: ipfsStat.size,
+            nlink: 1,
+            mode: filetype | permissions
+          })
+          return reply(0, stats as fuse.Stats)
         })
-        return reply(0, stats as fuse.Stats)
-      })
-      .catch((err: any) => bail(err, "ipfs files stat"))
-  }
+        .catch((err: any) => bail(err, "ipfs files stat"))
+    },
 
-  readonly readdir = (path: string, cb: (code: number, lst: string[]) => void) => {
-    debug("readdir " + path)
+    readdir: (path, cb) => {
+      debug("readdir " + path)
 
     const reply = (code: number, files: string[]) => {
       debug({ files });
@@ -132,31 +134,31 @@ class IpfsMount implements fuse.MountOptions {
     // todo: extra slashes cause "Error: path must contain at least one component"
     const ipfsPath = path === "/" ? path : "/ipfs"+path
 
-    this.ipfs.ls(ipfsPath)
-      .then((files) => reply(0,
-        files.filter(file => file.depth === 1).map(file => file.name)))
+    ipfs
+      .ls(ipfsPath)
+      .then((files) => reply(0, files.filter(file => file.depth === 1).map(file => file.name)))
       .catch((err: any) => bail(err, "ipfs ls"))
-  }
+    },
 
-  readonly read = (path: string, fd: number, buffer: Buffer, length: number, offset: number, cb: (bytesReadOrErr: number) => void) => {
-    debug("read " + path, { offset, length })
+    read: (path, fd, buffer, length, offset, cb) => {
+      debug("read " + path, { offset, length })
 
-    const reply = (bytesReadOrError: number) => {
-      debug({ bytesReadOrError });
-      cb(bytesReadOrError)
-    }
-    const bail = (err: any, reason?: any) => {
-      debug({ err, reason });
-      // make sure the return code is negative
-      reply(-Math.abs(errorToCode(err)))
-    }
+      const reply = (bytesReadOrError: number) => {
+        debug({ bytesReadOrError });
+        cb(bytesReadOrError)
+      }
+      const bail = (err: any, reason?: any) => {
+        debug({ err, reason });
+        reply(errorToCode(err))
+      }
 
-    if (path === "/") return bail(fuse.EPERM)
+      if (path === "/") return bail(fuse.EPERM)
 
-    const ipfsPath = path.substring(1)
+      const ipfsPath = path.substring(1)
 
-    this.reader.read(ipfsPath, buffer, { offset, length })
-      .then(result => reply(result.length))
-      .catch(bail)
+      reader.read(ipfsPath, buffer, { offset, length })
+        .then(result => reply(result.length))
+        .catch(bail)
+    },
   }
 }
