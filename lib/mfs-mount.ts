@@ -5,7 +5,6 @@ import { Mountable } from "./mount"
 const debug = require("debug")("MfsMountable")
 const FuseMfs = require("ipfs-fuse");
 
-
 const mountAsync = util.promisify(FuseMfs.mount);
 const unmountAsync = util.promisify(FuseMfs.unmount);
 
@@ -19,9 +18,10 @@ export function MfsMountable(
 
   return {
     mount: (root: string) => {
+      const reader = MfsReader_Direct(ipfs)
       const writer = MfsWriter_Direct(ipfs)
       const fuseOptions = {
-        ...MfsMount(ipfs, writer),
+        ...MfsMount(ipfs, reader, writer),
         ...extraFuseOptions,
       }
       return mountAsync(root, { ipfs: ipfsOptions, fuse: fuseOptions })
@@ -31,11 +31,35 @@ export function MfsMountable(
   }
 }
 
-function MfsMount(ipfs: IpfsApi, writer: MfsWriter): fuse.MountOptions {
+function errorToCode(err: any): number {
+  return typeof err === "number" ? err
+       : err instanceof Error && err.message === "file does not exist" ? fuse.ENOENT
+       : err instanceof Error && err.message === "path must contain at least one component" ? fuse.EPERM
+       : -1;
+}
+
+function MfsMount(ipfs: IpfsApi, reader: MfsReader, writer: MfsWriter): fuse.MountOptions {
   const start = Date.now()
 
   return {
     displayFolder: true,
+
+    read: (path, fd, buffer, length, offset, cb) => {
+      debug("read " + path, { offset, length })
+
+      const reply = (bytesReadOrError: number) => {
+        debug({ bytesReadOrError });
+        cb(bytesReadOrError)
+      }
+      const bail = (err: any, reason?: any) => {
+        debug({ err, reason });
+        reply(errorToCode(err))
+      }
+
+      reader.read(path, buffer, { offset, length })
+        .then(result => reply(result.length))
+        .catch(bail)
+    },
 
     chown: (path: string, uid: number, gid: number, cb: (err: number) => void) => {
       debug("custom chown " + path, { uid, gid, cb })
@@ -116,12 +140,34 @@ function MfsMount(ipfs: IpfsApi, writer: MfsWriter): fuse.MountOptions {
 }
 
 
+type MfsReader = {
+  read: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<IpfsApi.Segment>
+}
+
+export function MfsReader_Direct(ipfs: IpfsApi): MfsReader {
+  return {
+    read: async (path, buffer, segment) => {
+      const chunk = await ipfs.files.read(path, segment)
+
+      let fileOffset = 0
+      if (chunk.byteLength > segment.length) {
+        debug("fixme: ipfs.cat() ignored ", { segment }, " and returned ", { offset: 0, length: chunk.byteLength })
+        fileOffset = segment.offset
+      }
+
+      const bytesCopied = chunk.copy(buffer, 0, fileOffset, fileOffset + segment.length)
+      return { offset: segment.offset, length: bytesCopied }
+    },
+  }
+}
+
+
 type MfsWriter = {
   write: (path: string, buffer: Buffer, offset: number, count: number) => Promise<void>
   flush: (path: string) => Promise<void>
 }
 
-function MfsWriter_Direct(ipfs: IpfsApi): MfsWriter {
+export function MfsWriter_Direct(ipfs: IpfsApi): MfsWriter {
   return {
     write: (path: string, buffer: Buffer, offset: number, count: number) => {
       return ipfs.files.write(path, buffer, { offset: offset, count: count, flush: false })

@@ -43,6 +43,10 @@ declare module "ipfs-api" {
     // todo: incomplete
     files: {
       stat: (path: string) => Promise<any>,
+      read: (
+        path: string,
+        segment: IpfsApi.Segment,
+      ) => Promise<Buffer>,
       write: (
         path: string,
         buffer: Buffer,
