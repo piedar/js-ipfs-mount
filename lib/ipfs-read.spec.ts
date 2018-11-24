@@ -1,21 +1,12 @@
 import * as fs from "fs"
 import * as path from "path"
+import { promisify } from "util"
 import * as IpfsApi from "ipfs-api"
 import { expect } from "chai"
 import { describe, it } from "mocha"
-import { promisify } from "util"
 import { IpfsReader, IpfsReader_Direct, IpfsReader_ReadStream } from "./ipfs-read"
 const readFileAsync = promisify(fs.readFile)
 
-
-/// returns the result of a successful promise, or undefined if an error occurs
-/// workaround for PromiseRejectionHandledWarning: Promise rejection was handled asynchronously
-function detach<T>(promise: Promise<T>): Promise<T | undefined> {
-  return promise.catch(err => {
-    console.log({ detached: err })
-    return undefined
-  })
-}
 
 type TestCase = {
   readonly name: string,
@@ -37,7 +28,7 @@ function shouldMatch(expectedFile: string, ipfsPath: string): TestCase {
   return {
     name: path.parse(expectedFile).base,
     ipfsPath: ipfsPath,
-    expectedBuffer: detach(readFileAsync(expectedFile)),
+    expectedBuffer: readFileAsync(expectedFile).catch(err => { console.error(err); return undefined; }),
   }
 }
 
@@ -94,7 +85,7 @@ for (const { name, reader } of readers) {
 
         const leftover = buffer.slice(result.length)
         expect(leftover).to.deep.equal(new Buffer(leftover.byteLength), "overflow into empty bytes!")
-      }).timeout(5000)
+      }).timeout(5_000)
     }
   })
 }
