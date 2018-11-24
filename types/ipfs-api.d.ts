@@ -42,7 +42,15 @@ declare module "ipfs-api" {
 
     // todo: incomplete
     files: {
+      mkdir: (
+        path: string,
+        options?: { parents?: false | boolean, format?: "dag-pb" | string, hashAlg?: "sha2-256" | string, flush?: true | boolean },
+      ) => Promise<void>,
       stat: (path: string) => Promise<any>,
+      rm: (
+        path: string,
+        options?: { recursive?: false | boolean },
+      ) => Promise<void>,
       read: (
         path: string,
         segment: IpfsApi.Segment,
@@ -50,7 +58,7 @@ declare module "ipfs-api" {
       write: (
         path: string,
         buffer: Buffer,
-        options: { offset: number, count: number, flush: boolean },
+        options: { offset: number, length: number, flush: boolean },
       ) => Promise<void>,
       flush: (path: string) => Promise<void>,
     }

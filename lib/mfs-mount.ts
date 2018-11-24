@@ -118,7 +118,7 @@ function MfsMount(ipfs: IpfsApi, reader: MfsReader, writer: MfsWriter): fuse.Mou
     write: (path, fd, buf, len, pos, reply) => {
       debug("write", { path, len, pos })
 
-      writer.write(path, buf, pos, len)
+      writer.write(path, buf, { offset: pos, length: len })
         .then(() => reply(len))
         .catch((err: any) => {
           debug({ err })
@@ -163,14 +163,14 @@ export function MfsReader_Direct(ipfs: IpfsApi): MfsReader {
 
 
 type MfsWriter = {
-  write: (path: string, buffer: Buffer, offset: number, count: number) => Promise<void>
+  write: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<void>
   flush: (path: string) => Promise<void>
 }
 
 export function MfsWriter_Direct(ipfs: IpfsApi): MfsWriter {
   return {
-    write: (path: string, buffer: Buffer, offset: number, count: number) => {
-      return ipfs.files.write(path, buffer, { offset: offset, count: count, flush: false })
+    write: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => {
+      return ipfs.files.write(path, buffer, { ...segment, flush: false })
     },
     flush: (path: string) => {
       return ipfs.files.flush(path)
