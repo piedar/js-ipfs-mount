@@ -1,6 +1,6 @@
 {
   "name": "ipfs-mount",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "mount /ipfs /ipns /mfs",
   "main": "./dist/index.js",
   "bin": {
