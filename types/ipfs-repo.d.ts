@@ -1,11 +1,22 @@
 
-interface IpfsRepoOptions {
-  lock: 'fs' | string;
+type Closer = {
+  close: (callback: (err?: Error) => void) => void
+}
+
+type Lock = {
+  lock: (dir: string, callback: (err: Error | undefined, closer: Closer) => void) => void
+  locked: (dir: string, callback: (err: Error | undefined, isLocked: boolean) => void) => void
+}
+
+type DataStore = any // todo: ipfs/interface-datastore
+
+type IpfsRepoOptions = {
+  lock: Lock | 'fs' | 'memory' // raw strings are deprecated
   storageBackends: {
-    root: any;
-    blocks: any;
-    keys: any;
-    datastore: any;
+    root: DataStore;
+    blocks: DataStore;
+    keys: DataStore;
+    datastore: DataStore;
   }
   storageBackendOptions: {
     root: {
@@ -23,7 +34,7 @@ declare module "ipfs-repo" {
   class IpfsRepo {
     constructor(repoPath: string, options?: IpfsRepoOptions);
 
-    init(config: any, callback: (err?: Error) => void): void;
+    init(config: Object, callback: (err?: Error) => void): void;
     open(callback: (err: Error | null) => void): void;
     close(callback: (err: Error | null) => void): void;
     exists(callback: (err: Error | null, isOpen: boolean) => void): void;
