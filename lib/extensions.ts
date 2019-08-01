@@ -9,11 +9,17 @@ export function endOf(stream: Readable) {
 }
 
 export function flatten<T>(arrays: T[][]): T[] {
-  return [].concat.apply([], arrays);
+  return (new Array<T>()).concat.apply([], arrays);
+}
+
+function isFunction(thing: any): thing is Function {
+  return typeof thing === 'function'
+  // this works inline, but is apparently not as reliable
+  //return thing instanceof Function
 }
 
 export function resolve<T>(source: T | (() => T)): T {
-  return typeof source === "function" ? source()
+  return isFunction(source) ? source()
        : source
 }
 
