@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import * as command from "commander"
-import * as IpfsApi from "ipfs-api"
+import IpfsClient = require("ipfs-http-client")
 import * as mount from "../lib/mount"
 import { flatten } from "../lib/extensions"
 import { IpfsMountable } from "../lib/ipfs-mount"
@@ -43,7 +43,7 @@ if (!target) {
 
 
 const ipfsOptions = { }
-const ipfs = new IpfsApi(ipfsOptions)
+const ipfs = IpfsClient(ipfsOptions)
 const fuseOptions = { displayFolder: false, options: options }
 
 mount.untilDone(IpfsMountable(ipfs, fuseOptions), target, done)

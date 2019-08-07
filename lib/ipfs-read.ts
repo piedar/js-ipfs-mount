@@ -1,5 +1,5 @@
-import * as IpfsApi from "ipfs-api"
 import { endOf } from "./extensions"
+import { Readable } from "stream";
 const debug = require("debug")("IpfsMount")
 
 
@@ -7,7 +7,7 @@ export type IpfsReader = {
   read: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<IpfsApi.Segment>
 }
 
-export function IpfsReader_Direct(ipfs: IpfsApi): IpfsReader {
+export function IpfsReader_Direct(ipfs: IpfsApi.IpfsClient): IpfsReader {
   return {
     read: async (path, buffer, segment) => {
       const file = await ipfs.cat(path, segment);
@@ -24,11 +24,11 @@ export function IpfsReader_Direct(ipfs: IpfsApi): IpfsReader {
   }
 }
 
-export function IpfsReader_ReadStream(ipfs: IpfsApi): IpfsReader {
+export function IpfsReader_ReadStream(ipfs: IpfsApi.IpfsClient): IpfsReader {
   return {
     read: async (path, buffer, segment) => {
       let position = 0
-      const stream = ipfs.catReadableStream(path, segment)
+      const stream: Readable = ipfs.catReadableStream(path, segment)
 
       if (stream.readableLength !== segment.length) {
         debug("fixme: ipfs.catReadableStream() ignored ", { segment }, " and returned ", { offset: 0, length: stream.readableLength })

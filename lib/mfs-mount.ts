@@ -1,6 +1,6 @@
 import * as util from "util";
 import * as fuse from "fuse-bindings"
-import * as IpfsApi from "ipfs-api"
+import IpfsClient = require("ipfs-http-client")
 import { Mountable } from "./mount"
 const debug = require("debug")("MfsMountable")
 const FuseMfs = require("ipfs-fuse");
@@ -14,7 +14,7 @@ export function MfsMountable(
   extraFuseOptions: fuse.MountOptions = { },
 ): Mountable {
 
-  const ipfs = new IpfsApi(ipfsOptions)
+  const ipfs = IpfsClient(ipfsOptions)
 
   return {
     mount: (root: string) => {
@@ -38,7 +38,7 @@ function errorToCode(err: any): number {
        : -1;
 }
 
-function MfsMount(ipfs: IpfsApi, reader: MfsReader, writer: MfsWriter): fuse.MountOptions {
+function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter): fuse.MountOptions {
   const start = Date.now()
 
   return {
@@ -144,7 +144,7 @@ type MfsReader = {
   read: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<IpfsApi.Segment>
 }
 
-export function MfsReader_Direct(ipfs: IpfsApi): MfsReader {
+export function MfsReader_Direct(ipfs: IpfsApi.IpfsClient): MfsReader {
   return {
     read: async (path, buffer, segment) => {
       const chunk = await ipfs.files.read(path, segment)
@@ -167,7 +167,7 @@ type MfsWriter = {
   flush: (path: string) => Promise<void>
 }
 
-export function MfsWriter_Direct(ipfs: IpfsApi): MfsWriter {
+export function MfsWriter_Direct(ipfs: IpfsApi.IpfsClient): MfsWriter {
   return {
     write: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => {
       return ipfs.files.write(path, buffer, { ...segment, flush: false })

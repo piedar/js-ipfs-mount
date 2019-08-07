@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import { promisify } from "util"
-import * as IpfsApi from "ipfs-api"
+import IpfsClient = require("ipfs-http-client")
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import * as uuidv4 from "uuid/v4"
@@ -26,7 +26,7 @@ const testCases = [
 ]
 
 
-const ipfs = new IpfsApi()
+const ipfs = IpfsClient()
 
 describe(`${MfsReader_Direct.name} + ${MfsWriter_Direct.name}`, () => {
   const reader = MfsReader_Direct(ipfs)

@@ -1,6 +1,5 @@
 import * as util from "util"
 import * as fs from "fs"
-import * as IpfsApi from "ipfs-api"
 import * as fuse from "fuse-bindings"
 import { getOrAdd } from "./extensions"
 import { Mountable } from "./mount"
@@ -9,7 +8,7 @@ const debug = require("debug")("IpfsMount")
 
 
 export function IpfsMountable(
-  ipfs: IpfsApi,
+  ipfs: IpfsApi.IpfsClient,
   extraFuseOptions: fuse.MountOptions = { },
 ): Mountable {
 
@@ -44,7 +43,7 @@ function errorToCode(err: any): number {
 
 
 function IpfsMount(
-  ipfs: IpfsApi,
+  ipfs: IpfsApi.IpfsClient,
   reader: IpfsReader,
 ): fuse.MountOptions {
 

@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import { promisify } from "util"
-import * as IpfsApi from "ipfs-api"
+import IpfsClient = require("ipfs-http-client")
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import { IpfsReader, IpfsReader_Direct, IpfsReader_ReadStream } from "./ipfs-read"
@@ -57,7 +57,7 @@ const testCases = rawTestCases
   .sort((a, b) => a.name.localeCompare(b.name))
 
 
-const ipfs = new IpfsApi()
+const ipfs = IpfsClient()
 const readers = [
   { name: "IpfsReader_Direct", reader: IpfsReader_Direct(ipfs) },
   { name: "IpfsReader_ReadStream", reader: IpfsReader_ReadStream(ipfs) },
