@@ -89,7 +89,7 @@ DEBUG=* node dist/bin/mount.ipfs.js /ipfs
 # programs under ./bin/ are marked executable
 # on *nix systems, you can run them directly without recompiling!
 yarn global add ts-node
-DEBUG=* bin/mount.ipfs.ts /ipfs
+DEBUG=* TS_NODE_FILES=true bin/mount.ipfs.ts /ipfs
 ```
 
 
