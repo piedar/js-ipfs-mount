@@ -9,8 +9,9 @@
     "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": [ "dom", "es2015", "es2015.promise" ],
+    "lib": [ "ES2015", "ES2018.AsyncIterable", "ES2020.BigInt" ],
 
+    "types": [ "node" ],
     "baseUrl": "./",
     "paths": {
       "fuse-native": [ "./types/fuse-native" ],
