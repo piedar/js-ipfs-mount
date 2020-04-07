@@ -1,10 +1,12 @@
 #!/usr/bin/env ts-node
 
 import * as command from "commander"
+import Fuse = require("fuse-native")
 import IpfsClient = require("ipfs-http-client")
+
 import * as mount from "../lib/mount"
 import { flatten } from "../lib/extensions"
-import { MfsMountable } from "../lib/mfs-mount"
+import { MfsMount } from "../lib/mfs-mount"
 import { done } from "../lib/signals"
 import { version } from "../lib/version"
 
@@ -31,7 +33,7 @@ const target =
   : command.args.length == 1 ? command.args[0]
   : targetDefault;
 
-const options = flatten(
+const fuseOptions = flatten(
   (command.fuseOptions as string[])
     .map(opt => opt === "defaults" ? optionsDefault : [opt])
 );
@@ -43,7 +45,7 @@ if (!target) {
 
 const ipfsOptions = { }
 const ipfs = IpfsClient(ipfsOptions)
-const fuseOptions = { displayFolder: true, options: options }
+const fuse = new Fuse(target, MfsMount(ipfs), { displayFolder: 'mfs', ...fuseOptions })
 
-mount.untilDone(MfsMountable(ipfs, fuseOptions), target, done)
-  .catch(console.log)
+mount.untilDone(fuse, done)
+  .catch(console.error)

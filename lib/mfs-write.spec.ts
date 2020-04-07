@@ -5,7 +5,7 @@ import IpfsClient = require("ipfs-http-client")
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import * as uuidv4 from "uuid/v4"
-import { MfsMountable, MfsReader_Direct, MfsWriter_Direct } from "./mfs-mount";
+import { MfsReader_Direct, MfsWriter_Direct } from "./mfs-mount";
 const readFileAsync = promisify(fs.readFile)
 
 

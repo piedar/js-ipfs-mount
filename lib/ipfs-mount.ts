@@ -1,58 +1,28 @@
-import * as util from "util"
 import * as fs from "fs"
-import * as fuse from "fuse-bindings"
-import { getOrAdd } from "./extensions"
-import { Mountable } from "./mount"
-import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
+import * as Fuse from "fuse-native"
 const debug = require("debug")("IpfsMount")
 
+import { getOrAdd } from "./extensions"
+import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
 
-export function IpfsMountable(
-  ipfs: IpfsApi.IpfsClient,
-  extraFuseOptions: fuse.MountOptions = { },
-): Mountable {
-
-  return {
-    mount: (root: string) => {
-      const reader = IpfsReader_Direct(ipfs)
-      const mountOptions = {
-        ...IpfsMount(ipfs, reader),
-        ...extraFuseOptions,
-      }
-      return new Promise((resolve, reject) =>
-        fuse.mount(root, mountOptions,
-          (err) => err ? reject(err) : resolve()
-      ));
-    },
-
-    unmount: (root: string) => {
-      return new Promise((resolve, reject) =>
-        fuse.unmount(root,
-          (err) => err ? reject(err) : resolve()
-      ));
-    },
-  }
-}
 
 function errorToCode(err: any): number {
   return typeof err === "number" ? err
-       : err instanceof Error && err.message === "file does not exist" ? fuse.ENOENT
-       : err instanceof Error && err.message === "path must contain at least one component" ? fuse.EPERM
+       : err instanceof Error && err.message === "file does not exist" ? Fuse.ENOENT
+       : err instanceof Error && err.message === "path must contain at least one component" ? Fuse.EPERM
        : -1;
 }
 
 
-function IpfsMount(
+export function IpfsMount(
   ipfs: IpfsApi.IpfsClient,
-  reader: IpfsReader,
-): fuse.MountOptions {
+  reader: IpfsReader = IpfsReader_Direct(ipfs),
+): Fuse.Handlers {
 
   const firstAccessByPath = new Map<string, Date>()
 
   return {
-    displayFolder: false,
-
-    create: (path, mode, reply) => reply(fuse.EROFS),
+    create: (path, mode, reply) => reply(Fuse.EROFS),
 
     open: (path, flags, reply) => {
       debug("open " + path)
@@ -61,7 +31,7 @@ function IpfsMount(
 
     opendir: (path, flags, reply) => {
       debug("opendir " + path)
-      if (path === "/") return reply(fuse.EPERM, -1)
+      if (path === "/") return reply(Fuse.EPERM, -1)
       return reply(0, -1)
     },
 
@@ -70,7 +40,7 @@ function IpfsMount(
     //},
 
     getattr: (path, cb) => {
-      const reply = (code: number, stats: fuse.Stats) => {
+      const reply = (code: number, stats: Fuse.Stats) => {
         debug({ code, stats })
         cb(code, stats)
       }
@@ -113,7 +83,7 @@ function IpfsMount(
             nlink: 1,
             mode: filetype | permissions
           })
-          return reply(0, stats as fuse.Stats)
+          return reply(0, stats as Fuse.Stats)
         })
         .catch((err: any) => bail(err, "ipfs files stat"))
     },
@@ -151,7 +121,7 @@ function IpfsMount(
         reply(errorToCode(err))
       }
 
-      if (path === "/") return bail(fuse.EPERM)
+      if (path === "/") return bail(Fuse.EPERM)
 
       const ipfsPath = path.substring(1)
 

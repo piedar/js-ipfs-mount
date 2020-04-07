@@ -1,26 +1,16 @@
-import { Path } from "./path";
+import Fuse = require("fuse-native")
 const debug = require("debug")("mount")
 
 
-export interface Mountable {
-  mount(root: Path): Promise<any>
-  unmount(root: Path): Promise<any>
-}
-
-export async function untilDone<T>(m: Mountable, root: Path, done: () => Promise<T>): Promise<T>
-{
-  const trace = (...rest: any[]) => {
-    debug(rest, { root, what: m.constructor.name })
-  }
-
-  trace("mount pending")
-  await m.mount(root)
-  trace("mount ready")
+export async function untilDone<TResult>(fuse: Fuse, done: () => Promise<TResult>): Promise<TResult> {
+  debug("mount pending")
+  await new Promise((resolve, reject) => fuse.mount(err => err ? reject(err) : resolve()))
+  debug("mount ready")
 
   try { return await done() }
   finally {
-    trace("unmount pending")
-    await m.unmount(root)
-    trace("unmount complete")
+    debug("unmount pending")
+    await new Promise((resolve, reject) => fuse.unmount(err => err ? reject(err) : resolve()))
+    debug("unmount complete")
   }
 }

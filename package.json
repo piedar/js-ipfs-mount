@@ -12,7 +12,7 @@
   "license": "MIT",
   "scripts": {
     "prepare": "tsc && sed -i 's,#!/usr/bin/env ts-node,#!/usr/bin/env node,g' ./dist/bin/*.js && chmod +x ./dist/bin/*.js",
-    "test": "TS_NODE_FILES=true mocha --require ts-node/register ./**/*.spec.ts"
+    "test": "mocha --require ts-node/register ./**/*.spec.ts"
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
@@ -29,7 +29,7 @@
   "dependencies": {
     "commander": "^2.20.0",
     "debug": "^4.1.1",
-    "fuse-bindings": "^2.11.2",
+    "fuse-native": "^2.2.1",
     "ipfs-http-client": "^33.1.1",
     "uuid": "^3.3.2"
   }

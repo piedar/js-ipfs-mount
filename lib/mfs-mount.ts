@@ -1,51 +1,24 @@
-import * as fuse from "fuse-bindings"
-import { Mountable } from "./mount"
+import Fuse = require("fuse-native")
 const debug = require("debug")("MfsMountable")
+
 
 // some code based on https://github.com/tableflip/ipfs-fuse
 
-export function MfsMountable(
-  ipfs: IpfsApi.IpfsClient,
-  extraFuseOptions: fuse.MountOptions = { },
-): Mountable {
-
-  return {
-    mount (root: string) {
-      const reader = MfsReader_Direct(ipfs)
-      const writer = MfsWriter_Direct(ipfs)
-      const mountOptions = {
-        ...MfsMount(ipfs, reader, writer),
-        ...extraFuseOptions,
-      }
-
-      return new Promise((resolve, reject) =>
-        fuse.mount(root, mountOptions,
-          (err) => err ? reject(err) : resolve()
-      ));
-    },
-
-    unmount (root: string) {
-      return new Promise((resolve, reject) =>
-        fuse.unmount(root,
-          (err) => err ? reject(err) : resolve()
-      ))
-    },
-  }
-}
-
 function errorToCode(err: any): number {
   return typeof err === "number" ? err
-       : err instanceof Error && err.message === "file does not exist" ? fuse.ENOENT
-       : err instanceof Error && err.message === "path must contain at least one component" ? fuse.EPERM
+       : err instanceof Error && err.message === "file does not exist" ? Fuse.ENOENT
+       : err instanceof Error && err.message === "path must contain at least one component" ? Fuse.EPERM
        : -1;
 }
 
-function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter): fuse.MountOptions {
+export function MfsMount(
+  ipfs: IpfsApi.IpfsClient,
+  reader: MfsReader = MfsReader_Direct(ipfs),
+  writer: MfsWriter = MfsWriter_Direct(ipfs),
+): Fuse.Handlers {
   const start = Date.now()
 
   return {
-    displayFolder: true,
-
     create (path, mode, reply) {
       debug("create", { path, mode })
 
@@ -53,7 +26,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(0))
         .catch((err) => {
           debug("write failed", { err })
-          return reply(fuse.EREMOTEIO)
+          return reply(Fuse.EREMOTEIO)
         })
     },
 
@@ -74,7 +47,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
       }
       */
 
-      reply(fuse.EOPNOTSUPP)
+      reply(Fuse.EOPNOTSUPP)
     },
 
     mkdir (path, mode, reply) {
@@ -84,13 +57,13 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(0))
         .catch((err) => {
           debug("mkdir failed", { err })
-          return reply(fuse.EREMOTEIO)
+          return reply(Fuse.EREMOTEIO)
       })
     },
 
     mknod (path, mode, dev, reply) {
       debug("mknod", { path, mode, dev })
-      reply(fuse.EOPNOTSUPP) // can't make block or character special files in ipfs
+      reply(Fuse.EOPNOTSUPP) // can't make block or character special files in ipfs
     },
 
     open (path, flags, reply) {
@@ -130,7 +103,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(names => reply(0, names))
         .catch(err => {
           debug("ls failed", { err })
-          return reply(fuse.EREMOTEIO, undefined!)
+          return reply(Fuse.EREMOTEIO, undefined!)
         })
     },
 
@@ -142,7 +115,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(0))
         .catch((err) => {
           debug("mv failed", { err })
-          return reply(fuse.EREMOTEIO)
+          return reply(Fuse.EREMOTEIO)
         })
     },
 
@@ -154,7 +127,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(0))
         .catch(err => {
           debug("rm failed", { err })
-          return reply(fuse.EREMOTEIO)
+          return reply(Fuse.EREMOTEIO)
         })
     },
 
@@ -194,7 +167,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         })
         .catch(err => {
             debug("stat failed", { err })
-            return reply(fuse.EREMOTEIO, undefined!)
+            return reply(Fuse.EREMOTEIO, undefined!)
         })
     },
 
@@ -205,7 +178,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(0))
         .catch(err => {
           debug("rm failed", { err })
-          return reply(fuse.EREMOTEIO)
+          return reply(Fuse.EREMOTEIO)
         })
     },
 
@@ -214,11 +187,11 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
 
       ipfs.files.stat(path)
         .then(stat => {
-          return reply(fuse.EOPNOTSUPP)
+          return reply(Fuse.EOPNOTSUPP)
         })
         .catch(err => {
           if (err.message === 'file does not exist') {
-            return reply(fuse.ENOENT)
+            return reply(Fuse.ENOENT)
 
             // todo: should it really create a file if does not exist?
             /*
@@ -247,10 +220,10 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
       return cb(0)
     },
 
-    getattr: (path: string, cb: (err: number, stats: fuse.Stats) => void) => {
+    getattr: (path: string, cb: (err: number, stats: Fuse.Stats) => void) => {
       debug("custom getattr " + path)
 
-      const reply = (stats: fuse.Stats) => {
+      const reply = (stats: Fuse.Stats) => {
         debug(stats)
         return cb(0, stats)
       }
@@ -283,8 +256,8 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
           } as any)
         })
         .catch((err: any) => {
-          const errno = err && err.message === 'file does not exist' ? fuse.ENOENT
-                      : fuse.EREMOTEIO;
+          const errno = err && err.message === 'file does not exist' ? Fuse.ENOENT
+                      : Fuse.EREMOTEIO;
           return bail(errno, err)
         })
     },
@@ -296,7 +269,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(len))
         .catch((err: any) => {
           debug({ err })
-          reply(fuse.EREMOTEIO)
+          reply(Fuse.EREMOTEIO)
         })
     },
 
@@ -307,7 +280,7 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
         .then(() => reply(0))
         .catch((err: any) => {
           debug({ err })
-          reply(fuse.EREMOTEIO)
+          reply(Fuse.EREMOTEIO)
         })
     }
   }

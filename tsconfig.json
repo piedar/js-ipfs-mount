@@ -11,6 +11,12 @@
     "moduleResolution": "node",
     "lib": [ "dom", "es2015", "es2015.promise" ],
 
+    "baseUrl": "./",
+    "paths": {
+      "fuse-native": [ "./types/fuse-native" ],
+      "ipfs-http-client": [ "./types/ipfs-http-client" ]
+    },
+
     "outDir": "./dist",
     //"declaration": true,
     //"sourceMap": false,
