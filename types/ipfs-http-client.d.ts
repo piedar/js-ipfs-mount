@@ -40,6 +40,8 @@ declare module IpfsApi {
         path: string,
         options?: { recursive?: false | boolean },
       ) => Promise<void>,
+      ls: (path: string) => AsyncIterable<any>,
+      mv: (from: string, to: string, options?: { parents?: false | boolean, hashAlg?: "sha2-256" | string, flush?: true | boolean }) => Promise<void>,
       read: (
         path: string,
         segment: IpfsApi.Segment,
@@ -50,7 +52,12 @@ declare module IpfsApi {
         options: { offset: number, length: number, flush: boolean },
       ) => Promise<void>,
       flush: (path: string) => Promise<void>,
-    }
+    },
+
+    // todo: incomplete
+    repo: {
+      stat(options?: { human?: boolean }): Promise<{ numObjects: BigInt, repoSize: BigInt, repoPath: string, version: string, storageMax: BigInt }>,
+    },
   }
 }
 

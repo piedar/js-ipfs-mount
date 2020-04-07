@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 
 import * as command from "commander"
+import IpfsClient = require("ipfs-http-client")
 import * as mount from "../lib/mount"
 import { flatten } from "../lib/extensions"
 import { MfsMountable } from "../lib/mfs-mount"
@@ -41,7 +42,8 @@ if (!target) {
 }
 
 const ipfsOptions = { }
+const ipfs = IpfsClient(ipfsOptions)
 const fuseOptions = { displayFolder: true, options: options }
 
-mount.untilDone(MfsMountable(ipfsOptions, fuseOptions), target, done)
+mount.untilDone(MfsMountable(ipfs, fuseOptions), target, done)
   .catch(console.log)

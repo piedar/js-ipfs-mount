@@ -1,33 +1,35 @@
-import * as util from "util";
 import * as fuse from "fuse-bindings"
-import IpfsClient = require("ipfs-http-client")
 import { Mountable } from "./mount"
 const debug = require("debug")("MfsMountable")
-const FuseMfs = require("ipfs-fuse");
 
-const mountAsync = util.promisify(FuseMfs.mount);
-const unmountAsync = util.promisify(FuseMfs.unmount);
-
+// some code based on https://github.com/tableflip/ipfs-fuse
 
 export function MfsMountable(
-  ipfsOptions: IpfsApi.Options = { },
+  ipfs: IpfsApi.IpfsClient,
   extraFuseOptions: fuse.MountOptions = { },
 ): Mountable {
 
-  const ipfs = IpfsClient(ipfsOptions)
-
   return {
-    mount: (root: string) => {
+    mount (root: string) {
       const reader = MfsReader_Direct(ipfs)
       const writer = MfsWriter_Direct(ipfs)
-      const fuseOptions = {
+      const mountOptions = {
         ...MfsMount(ipfs, reader, writer),
         ...extraFuseOptions,
       }
-      return mountAsync(root, { ipfs: ipfsOptions, fuse: fuseOptions })
+
+      return new Promise((resolve, reject) =>
+        fuse.mount(root, mountOptions,
+          (err) => err ? reject(err) : resolve()
+      ));
     },
 
-    unmount: (root: string) => unmountAsync(root),
+    unmount (root: string) {
+      return new Promise((resolve, reject) =>
+        fuse.unmount(root,
+          (err) => err ? reject(err) : resolve()
+      ))
+    },
   }
 }
 
@@ -44,6 +46,58 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
   return {
     displayFolder: true,
 
+    create (path, mode, reply) {
+      debug("create", { path, mode })
+
+      writer.write(path, Buffer.from(''), { offset: 0, length: 0 })
+        .then(() => reply(0))
+        .catch((err) => {
+          debug("write failed", { err })
+          return reply(fuse.EREMOTEIO)
+        })
+    },
+
+    ftruncate (path, fd, size, reply) {
+      debug("ftruncate", { path, fd, size })
+
+      // todo: check ipfs truncate support
+      /*
+      if (size === 0) {
+        ipfs.files.write(path, Buffer.from(''), { truncate: true })
+          .then(() => reply(0))
+          .catch((err) => {
+            debug("write failed", { err })
+            return reply(fuse.EREMOTEIO)
+          })
+      } else {
+        // todo: read size bytes then write with truncate true
+      }
+      */
+
+      reply(fuse.EOPNOTSUPP)
+    },
+
+    mkdir (path, mode, reply) {
+      debug("mkdir", { path, mode })
+
+      ipfs.files.mkdir(path)
+        .then(() => reply(0))
+        .catch((err) => {
+          debug("mkdir failed", { err })
+          return reply(fuse.EREMOTEIO)
+      })
+    },
+
+    mknod (path, mode, dev, reply) {
+      debug("mknod", { path, mode, dev })
+      reply(fuse.EOPNOTSUPP) // can't make block or character special files in ipfs
+    },
+
+    open (path, flags, reply) {
+      debug("open", { path, flags })
+      reply(0, 42) // todo: real fd
+    },
+
     read: (path, fd, buffer, length, offset, cb) => {
       debug("read " + path, { offset, length })
 
@@ -59,6 +113,126 @@ function MfsMount(ipfs: IpfsApi.IpfsClient, reader: MfsReader, writer: MfsWriter
       reader.read(path, buffer, { offset, length })
         .then(result => reply(result.length))
         .catch(bail)
+    },
+
+    readdir (path, reply) {
+      debug("readdir", { path })
+
+      async function gatherFileNames() {
+        const allNames = new Array<string>()
+        for await (const file of ipfs.files.ls(path)) {
+          allNames.push(file.name || file.hash)
+        }
+        return allNames
+      }
+
+      gatherFileNames()
+        .then(names => reply(0, names))
+        .catch(err => {
+          debug("ls failed", { err })
+          return reply(fuse.EREMOTEIO, undefined!)
+        })
+    },
+
+    rename (src, dest, reply) {
+      debug("rename", { src, dest })
+
+      // todo: look into options
+      ipfs.files.mv(src, dest)
+        .then(() => reply(0))
+        .catch((err) => {
+          debug("mv failed", { err })
+          return reply(fuse.EREMOTEIO)
+        })
+    },
+
+    rmdir (path, reply) {
+      debug("rmdir", { path })
+
+      // todo: does recursive match the semantics of rmdir?
+      ipfs.files.rm(path, { recursive: true })
+        .then(() => reply(0))
+        .catch(err => {
+          debug("rm failed", { err })
+          return reply(fuse.EREMOTEIO)
+        })
+    },
+
+    statfs (path, reply) {
+      debug("statfs", { path })
+
+      ipfs.repo.stat()
+        .then(stat => {
+          // todo: this needs a lot of work
+          // https://github.com/mafintosh/fuse-bindings#opsstatfspath-cb
+          // https://github.com/mafintosh/fuse-bindings/blob/032ed16e234f7379fbf421c12afef592ab2a292d/fuse-bindings.cc#L771-L783
+          // http://man7.org/linux/man-pages/man2/statfs.2.html
+          const data = {
+            bsize: 8, // todo: Because 8 bits in a byte right?
+            frsize: 0, // todo: No idea...
+            blocks: Number.isSafeInteger(Number(stat.repoSize))
+              ? Number(stat.repoSize) // todo: have to reply with int32
+              : Number.MAX_SAFE_INTEGER, // If blocks are bytes?
+            bfree: Number.isSafeInteger(Number(stat.storageMax) - Number(stat.repoSize))
+              ? Number(stat.storageMax) - Number(stat.repoSize) // todo: have to reply with int32
+              : Number.MAX_SAFE_INTEGER, // todo: because blocks are bytes?
+            bavail: Number.isSafeInteger(Number(stat.storageMax) - Number(stat.repoSize))
+              ? Number(stat.storageMax) - Number(stat.repoSize) // todo: have to reply with int32
+              : Number.MAX_SAFE_INTEGER, // todo: because blocks are bytes?
+            files: Number.isSafeInteger(Number(stat.numObjects))
+              ? Number(stat.numObjects) // todo: have to reply with int32
+              : Number.MAX_SAFE_INTEGER,
+            ffree: Number.MAX_SAFE_INTEGER, // todo: no idea how to work this out
+            favail: Number.MAX_SAFE_INTEGER, // todo: no idea how to work this out
+            fsid: 0, // todo: WHAT IS?
+            flag: 0, // todo: does fuse know this?
+            namemax: Number.MAX_SAFE_INTEGER // todo: get from OS?
+          }
+
+          debug({ data })
+          reply(0, data)
+        })
+        .catch(err => {
+            debug("stat failed", { err })
+            return reply(fuse.EREMOTEIO, undefined!)
+        })
+    },
+
+    unlink (path, reply) {
+      debug("unlink", { path })
+
+      ipfs.files.rm(path)
+        .then(() => reply(0))
+        .catch(err => {
+          debug("rm failed", { err })
+          return reply(fuse.EREMOTEIO)
+        })
+    },
+
+    utimens (path, atime, mtime, reply) {
+      debug("utimens", { path, atime, mtime })
+
+      ipfs.files.stat(path)
+        .then(stat => {
+          return reply(fuse.EOPNOTSUPP)
+        })
+        .catch(err => {
+          if (err.message === 'file does not exist') {
+            return reply(fuse.ENOENT)
+
+            // todo: should it really create a file if does not exist?
+            /*
+            ipfs.files.write(path, Buffer.from(''), { create: true }, (err) => {
+              if (err) {
+                err = explain(err, 'Failed to create file')
+                debug(err)
+                return reply(Fuse.EREMOTEIO)
+              }
+              reply(0)
+            })
+            */
+          }
+        })
     },
 
     chown: (path: string, uid: number, gid: number, cb: (err: number) => void) => {
