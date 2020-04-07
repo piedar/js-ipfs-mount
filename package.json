@@ -27,10 +27,11 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "bignumber.js": "^9.0.0",
     "commander": "^5.0.0",
     "debug": "^4.1.1",
     "fuse-native": "^2.2.1",
-    "ipfs-http-client": "^33.1.1",
+    "ipfs-http-client": "^43.0.0",
     "uuid": "^7.0.3"
   }
 }

@@ -2,7 +2,7 @@
 
 import * as command from "commander"
 import Fuse = require("fuse-native")
-import IpfsClient = require("ipfs-http-client")
+import IpfsHttpClient = require("ipfs-http-client")
 
 import * as mount from "../lib/mount"
 import { flatten } from "../lib/extensions"
@@ -45,7 +45,7 @@ if (!target) {
 
 
 const ipfsOptions = { }
-const ipfs = IpfsClient(ipfsOptions)
+const ipfs = IpfsHttpClient(ipfsOptions)
 const fuse = new Fuse(target, IpfsMount(ipfs), fuseOptions as Fuse.MountOptions)
 
 mount.untilDone(fuse, done)

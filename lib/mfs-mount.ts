@@ -1,6 +1,7 @@
 import Fuse = require("fuse-native")
+import { IpfsClient, Segment } from "ipfs-api"
 const debug = require("debug")("MfsMountable")
-
+import { gather, map } from "./iterable"
 
 // some code based on https://github.com/tableflip/ipfs-fuse
 
@@ -12,7 +13,7 @@ function errorToCode(err: any): number {
 }
 
 export function MfsMount(
-  ipfs: IpfsApi.IpfsClient,
+  ipfs: IpfsClient,
   reader: MfsReader = MfsReader_Direct(ipfs),
   writer: MfsWriter = MfsWriter_Direct(ipfs),
 ): Fuse.Handlers {
@@ -22,12 +23,22 @@ export function MfsMount(
     create (path, mode, reply) {
       debug("create", { path, mode })
 
+      ipfs.files.touch(path, { flush: true })
+        .then(() => ipfs.files.chmod(path, mode, { flush: true }))
+        .then(() => reply(0))
+        .catch((err) => {
+          debug("create failed", { err })
+          return reply(Fuse.EREMOTEIO)
+        })
+
+        /*
       writer.write(path, Buffer.from(''), { offset: 0, length: 0 })
         .then(() => reply(0))
         .catch((err) => {
           debug("write failed", { err })
           return reply(Fuse.EREMOTEIO)
         })
+        */
     },
 
     ftruncate (path, fd, size, reply) {
@@ -53,7 +64,7 @@ export function MfsMount(
     mkdir (path, mode, reply) {
       debug("mkdir", { path, mode })
 
-      ipfs.files.mkdir(path)
+      ipfs.files.mkdir(path, { mode })
         .then(() => reply(0))
         .catch((err) => {
           debug("mkdir failed", { err })
@@ -91,15 +102,7 @@ export function MfsMount(
     readdir (path, reply) {
       debug("readdir", { path })
 
-      async function gatherFileNames() {
-        const allNames = new Array<string>()
-        for await (const file of ipfs.files.ls(path)) {
-          allNames.push(file.name || file.hash)
-        }
-        return allNames
-      }
-
-      gatherFileNames()
+      gather(map(ipfs.files.ls(path), f => f.name))
         .then(names => reply(0, names))
         .catch(err => {
           debug("ls failed", { err })
@@ -110,7 +113,7 @@ export function MfsMount(
     rename (src, dest, reply) {
       debug("rename", { src, dest })
 
-      // todo: look into options
+      // todo: look into parent option
       ipfs.files.mv(src, dest)
         .then(() => reply(0))
         .catch((err) => {
@@ -233,7 +236,7 @@ export function MfsMount(
       }
 
       ipfs.files.stat(path)
-        .then((ipfsStat: any) => {
+        .then(ipfsStat => {
           // blksize is vital for write performance
           // todo: wget and curl max out at 8192?
 
@@ -288,36 +291,37 @@ export function MfsMount(
 
 
 type MfsReader = {
-  read: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<IpfsApi.Segment>
+  read: (path: string, buffer: Buffer, segment: Segment) => Promise<Segment>
 }
 
-export function MfsReader_Direct(ipfs: IpfsApi.IpfsClient): MfsReader {
+export function MfsReader_Direct(ipfs: IpfsClient): MfsReader {
   return {
-    read: async (path, buffer, segment) => {
-      const chunk = await ipfs.files.read(path, segment)
-
-      let fileOffset = 0
-      if (chunk.byteLength > segment.length) {
-        debug("fixme: ipfs.cat() ignored ", { segment }, " and returned ", { offset: 0, length: chunk.byteLength })
-        fileOffset = segment.offset
+    async read (path, buffer, segment) {
+      let targetOffset = 0
+      for await (const chunk of ipfs.files.read(path, segment)) {
+        debug("read chunk", { chunk })
+        const targetEnd = targetOffset + chunk.length
+        if (targetEnd > segment.length) {
+          // todo: is this check still necessary?
+          throw { message: "ipfs.files.read() returned a bad segment", segment, targetEnd }
+        }
+        targetOffset += chunk.copy(buffer, targetOffset)
       }
-
-      const bytesCopied = chunk.copy(buffer, 0, fileOffset, fileOffset + segment.length)
-      return { offset: segment.offset, length: bytesCopied }
-    },
+      return { offset: segment.offset, length: targetOffset }
+    }
   }
 }
 
 
 type MfsWriter = {
-  write: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => Promise<void>
+  write: (path: string, buffer: Buffer, segment: Segment) => Promise<void>
   flush: (path: string) => Promise<void>
 }
 
-export function MfsWriter_Direct(ipfs: IpfsApi.IpfsClient): MfsWriter {
+export function MfsWriter_Direct(ipfs: IpfsClient): MfsWriter {
   return {
-    write: (path: string, buffer: Buffer, segment: IpfsApi.Segment) => {
-      return ipfs.files.write(path, buffer, { ...segment, flush: false })
+    write: (path: string, buffer: Buffer, segment: Segment) => {
+      return ipfs.files.write(path, buffer, { ...segment })
     },
     flush: (path: string) => {
       return ipfs.files.flush(path)

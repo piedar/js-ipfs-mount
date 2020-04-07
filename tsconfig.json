@@ -9,12 +9,13 @@
     "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": [ "ES2015", "ES2018.AsyncIterable", "ES2020.BigInt" ],
+    "lib": [ "ES2015", "ES2018.AsyncIterable" ],
 
     "types": [ "node" ],
     "baseUrl": "./",
     "paths": {
       "fuse-native": [ "./types/fuse-native" ],
+      "ipfs-api": [ "./types/ipfs-api" ],
       "ipfs-http-client": [ "./types/ipfs-http-client" ]
     },
 

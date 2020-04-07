@@ -1,8 +1,10 @@
 import * as fs from "fs"
 import * as Fuse from "fuse-native"
+import { IpfsClient } from "ipfs-api"
 const debug = require("debug")("IpfsMount")
 
 import { getOrAdd } from "./extensions"
+import { filter, gather, map } from "./iterable"
 import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
 
 
@@ -13,9 +15,8 @@ function errorToCode(err: any): number {
        : -1;
 }
 
-
 export function IpfsMount(
-  ipfs: IpfsApi.IpfsClient,
+  ipfs: IpfsClient,
   reader: IpfsReader = IpfsReader_Direct(ipfs),
 ): Fuse.Handlers {
 
@@ -71,7 +72,7 @@ export function IpfsMount(
       const ipfsPath = path === "/" ? path : "/ipfs/"+path
 
       ipfs.files.stat(ipfsPath)
-        .then((ipfsStat: any) => {
+        .then(ipfsStat => {
           debug({ ipfsStat })
 
           const [filetype, permissions] =
@@ -91,22 +92,25 @@ export function IpfsMount(
     readdir: (path, cb) => {
       debug("readdir " + path)
 
-    const reply = (code: number, files: string[]) => {
-      debug({ files });
-      cb(code, files)
-    }
-    const bail = (err: any, reason?: any) => {
-      debug({ err, reason });
-      reply(errorToCode(err), [])
-    }
+      const reply = (code: number, files: string[]) => {
+        debug({ files });
+        cb(code, files)
+      }
+      const bail = (err: any, reason?: any) => {
+        debug({ err, reason });
+        reply(errorToCode(err), [])
+      }
 
-    // todo: extra slashes cause "Error: path must contain at least one component"
-    const ipfsPath = path === "/" ? path : "/ipfs"+path
+      // todo: extra slashes cause "Error: path must contain at least one component"
+      const ipfsPath = path === "/" ? path : "/ipfs"+path
 
-    ipfs
-      .ls(ipfsPath)
-      .then((files) => reply(0, files.filter(file => file.depth === 1).map(file => file.name)))
-      .catch((err: any) => bail(err, "ipfs ls"))
+      gather(
+        map(
+          filter(ipfs.ls(ipfsPath), file => file.depth === 1),
+          file => file.name)
+        )
+        .then(names => reply(0, names))
+        .catch((err: any) => bail(err, "ipfs ls"))
     },
 
     read: (path, fd, buffer, length, offset, cb) => {

@@ -1,10 +1,10 @@
 import * as fs from "fs"
 import * as path from "path"
 import { promisify } from "util"
-import IpfsClient = require("ipfs-http-client")
+import IpfsHttpClient = require("ipfs-http-client")
 import { expect } from "chai"
 import { describe, it } from "mocha"
-import { IpfsReader, IpfsReader_Direct, IpfsReader_ReadStream } from "./ipfs-read"
+import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
 const readFileAsync = promisify(fs.readFile)
 
 
@@ -57,10 +57,9 @@ const testCases = rawTestCases
   .sort((a, b) => a.name.localeCompare(b.name))
 
 
-const ipfs = IpfsClient()
+const ipfs = IpfsHttpClient()
 const readers = [
-  { name: "IpfsReader_Direct", reader: IpfsReader_Direct(ipfs) },
-  { name: "IpfsReader_ReadStream", reader: IpfsReader_ReadStream(ipfs) },
+  { name: IpfsReader_Direct.name, reader: IpfsReader_Direct(ipfs) },
 ]
 
 for (const { name, reader } of readers) {
