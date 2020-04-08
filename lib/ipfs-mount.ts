@@ -1,4 +1,5 @@
 import * as fs from "fs"
+import { join } from "path"
 import * as Fuse from "fuse-native"
 import { IpfsClient } from "ipfs-api"
 const debug = require("debug")("IpfsMount")
@@ -67,7 +68,7 @@ export function IpfsMount(
         atime: now,
       }
 
-      const ipfsPath = path === "/" ? path : "/ipfs/"+path
+      const ipfsPath = path === "/" ? path : join("/ipfs", path)
 
       ipfs.files.stat(ipfsPath)
         .then(ipfsStat => {
@@ -99,8 +100,7 @@ export function IpfsMount(
         reply(errorToFuseCode(err), [])
       }
 
-      // todo: extra slashes cause "Error: path must contain at least one component"
-      const ipfsPath = path === "/" ? path : "/ipfs"+path
+      const ipfsPath = path === "/" ? path : join("/ipfs", path)
 
       gather(
         map(
