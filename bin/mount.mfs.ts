@@ -9,6 +9,7 @@ import { flatten } from "../lib/extensions"
 import { MfsMount } from "../lib/mfs-mount"
 import { done } from "../lib/signals"
 import { version } from "../lib/version"
+import { parseFuseOptions } from "../lib/fuse-options"
 
 
 const targetDefault = "/mfs"
@@ -33,10 +34,10 @@ const target =
   : command.args.length == 1 ? command.args[0]
   : targetDefault;
 
-const fuseOptions = flatten(
+const fuseOptions = parseFuseOptions(flatten(
   (command.fuseOptions as string[])
     .map(opt => opt === "defaults" ? optionsDefault : [opt])
-);
+))
 
 if (!target) {
   console.log("must specify a target")

@@ -9,6 +9,7 @@ import { flatten } from "../lib/extensions"
 import { IpfsMount } from "../lib/ipfs-mount"
 import { done } from "../lib/signals"
 import { version } from "../lib/version"
+import { parseFuseOptions } from "../lib/fuse-options"
 
 
 const targetDefault = "/ipfs"
@@ -33,10 +34,10 @@ const target =
   : command.args.length == 1 ? command.args[0]
   : targetDefault;
 
-const fuseOptions = flatten(
+const fuseOptions = parseFuseOptions(flatten(
   (command.fuseOptions as string[])
     .map(opt => opt === "defaults" ? optionsDefault : [opt])
-);
+))
 
 if (!target) {
   console.log("must specify a target")
@@ -46,7 +47,7 @@ if (!target) {
 
 const ipfsOptions = { }
 const ipfs = IpfsHttpClient(ipfsOptions)
-const fuse = new Fuse(target, IpfsMount(ipfs), fuseOptions as Fuse.MountOptions)
+const fuse = new Fuse(target, IpfsMount(ipfs), fuseOptions)
 
 mount.untilDone(fuse, done)
   .catch(console.error)

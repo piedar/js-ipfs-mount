@@ -26,6 +26,7 @@ declare module "fuse-native" {
       mkdir?: boolean,
     }
     // also accepts options from http://man7.org/linux/man-pages/man8/mount.fuse.8.html
+    & { [key: string]: string | boolean }
 
     type Handlers = {
       /**
