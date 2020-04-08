@@ -1,5 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
+import { Buffer } from "buffer"
 import IpfsHttpClient = require("ipfs-http-client")
 import { expect } from "chai"
 import { describe, it } from "mocha"
@@ -34,12 +35,12 @@ const rawTestCases: TestCase[] = [
   {
     name: "empty",
     ipfsPath: "/ipfs/QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH",
-    expectedBuffer: new Buffer(0),
+    expectedBuffer: Buffer.of(),
   },
   {
     name: "hello",
     ipfsPath: "/ipfs/QmZULkCELmmk5XNfCgTnCyFgAVxBRBXyDHGGMVoLFLiXEN",
-    expectedBuffer: new Buffer("hello\n"),
+    expectedBuffer: Buffer.from("hello\n"),
   },
 
   shouldMatch("/usr/portage/distfiles/vlc-2.2.8.tar.xz", "/ipfs/QmW6vbhabbRUHxfR98cnnDp1m5DjPCsvzZiowh4FbRZPAv"),
@@ -71,7 +72,7 @@ for (const { name, reader } of readers) {
         }
 
         // use longer buffer to test for overflow
-        const buffer = new Buffer(expectedBuffer.byteLength + 4)
+        const buffer = Buffer.alloc(expectedBuffer.byteLength + 4)
         const segment = { offset: testCase.offset || 0, length: buffer.byteLength }
         const result = await reader.read(testCase.ipfsPath, buffer, segment)
 
@@ -81,7 +82,7 @@ for (const { name, reader } of readers) {
         expect(actual).to.deep.equal(expectedBuffer)
 
         const leftover = buffer.slice(result.length)
-        expect(leftover).to.deep.equal(new Buffer(leftover.byteLength), "overflow into empty bytes!")
+        expect(leftover).to.deep.equal(Buffer.alloc(leftover.byteLength), "overflow into empty bytes!")
       }).timeout(5_000)
     }
   })

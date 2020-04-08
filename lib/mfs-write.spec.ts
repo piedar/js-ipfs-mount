@@ -1,5 +1,6 @@
 import * as fs from "fs"
 import * as path from "path"
+import { Buffer } from "buffer"
 import IpfsHttpClient = require("ipfs-http-client")
 import { expect } from "chai"
 import { describe, it } from "mocha"
@@ -17,7 +18,7 @@ function fileTest(expectedFile: string) {
 const testCases = [
   {
     name: "hello",
-    expectedBuffer: new Buffer("hello\n"),
+    expectedBuffer: Buffer.from("hello\n"),
   },
   fileTest("/usr/portage/distfiles/vlc-3.0.4.tar.xz"),
   fileTest("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz"),
@@ -49,7 +50,7 @@ describe(`${MfsReader_Direct.name} + ${MfsWriter_Direct.name}`, () => {
         const writeOptions = { ...segment, create: true, }
         await writer.write(mfsPath, expectedBuffer, writeOptions)
 
-        const resultBuffer = new Buffer(segment.length)
+        const resultBuffer = Buffer.alloc(segment.length)
         const result = await reader.read(mfsPath, resultBuffer, segment)
         expect(segment).to.deep.include(result)
         expect(resultBuffer).to.deep.equal(expectedBuffer)
