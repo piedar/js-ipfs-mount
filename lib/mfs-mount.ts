@@ -1,16 +1,12 @@
 import Fuse = require("fuse-native")
 import { IpfsClient, Segment } from "ipfs-api"
 const debug = require("debug")("MfsMountable")
+
+import { errorToFuseCode } from "./errors"
 import { gather, map } from "./iterable"
 
 // some code based on https://github.com/tableflip/ipfs-fuse
 
-function errorToCode(err: any): number {
-  return typeof err === "number" ? err
-       : err instanceof Error && err.message === "file does not exist" ? Fuse.ENOENT
-       : err instanceof Error && err.message === "path must contain at least one component" ? Fuse.EPERM
-       : -1;
-}
 
 export function MfsMount(
   ipfs: IpfsClient,
@@ -91,7 +87,7 @@ export function MfsMount(
       }
       const bail = (err: any, reason?: any) => {
         debug({ err, reason });
-        reply(errorToCode(err))
+        reply(errorToFuseCode(err))
       }
 
       reader.read(path, buffer, { offset, length })
@@ -223,17 +219,8 @@ export function MfsMount(
       return cb(0)
     },
 
-    getattr: (path: string, cb: (err: number, stats: Fuse.Stats) => void) => {
+    getattr: (path: string, reply: (err: number, stats: Fuse.Stats) => void) => {
       debug("custom getattr " + path)
-
-      const reply = (stats: Fuse.Stats) => {
-        debug(stats)
-        return cb(0, stats)
-      }
-      const bail = (err: number, message?: any) => {
-        debug({ err, message })
-        return cb(err, undefined!)
-      }
 
       ipfs.files.stat(path)
         .then(ipfsStat => {
@@ -244,7 +231,7 @@ export function MfsMount(
           // might get weird results when using auto_cache
           const now = Date.now()
 
-          reply({
+          reply(0, {
             blksize: 256 * 1024,
 
             mtime: now,
@@ -258,10 +245,9 @@ export function MfsMount(
             gid: process.getgid ? process.getgid() : 0
           } as any)
         })
-        .catch((err: any) => {
-          const errno = err && err.message === 'file does not exist' ? Fuse.ENOENT
-                      : Fuse.EREMOTEIO;
-          return bail(errno, err)
+        .catch(err => {
+          debug("stat failed", { err })
+          return reply(errorToFuseCode(err), undefined!)
         })
     },
 

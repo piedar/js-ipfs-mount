@@ -3,17 +3,10 @@ import * as Fuse from "fuse-native"
 import { IpfsClient } from "ipfs-api"
 const debug = require("debug")("IpfsMount")
 
+import { errorToFuseCode } from "./errors"
 import { getOrAdd } from "./extensions"
 import { filter, gather, map } from "./iterable"
 import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
-
-
-function errorToCode(err: any): number {
-  return typeof err === "number" ? err
-       : err instanceof Error && err.message === "file does not exist" ? Fuse.ENOENT
-       : err instanceof Error && err.message === "path must contain at least one component" ? Fuse.EPERM
-       : -1;
-}
 
 export function IpfsMount(
   ipfs: IpfsClient,
@@ -47,7 +40,7 @@ export function IpfsMount(
       }
       const bail = (err: any, reason?: any) => {
         debug({ err, reason })
-        reply(errorToCode(err), undefined!)
+        reply(errorToFuseCode(err), undefined!)
       }
 
       const now = new Date(Date.now())
@@ -98,7 +91,7 @@ export function IpfsMount(
       }
       const bail = (err: any, reason?: any) => {
         debug({ err, reason });
-        reply(errorToCode(err), [])
+        reply(errorToFuseCode(err), [])
       }
 
       // todo: extra slashes cause "Error: path must contain at least one component"
@@ -122,7 +115,7 @@ export function IpfsMount(
       }
       const bail = (err: any, reason?: any) => {
         debug({ err, reason });
-        reply(errorToCode(err))
+        reply(errorToFuseCode(err))
       }
 
       if (path === "/") return bail(Fuse.EPERM)
