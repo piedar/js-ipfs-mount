@@ -70,9 +70,10 @@ declare module "fuse-native" {
        * Called when a file descriptor is being flushed.
        * @param path
        * @param fd
+       * @param datasync // todo: this is wrong upstream
        * @param cb
        */
-      flush?(path: string, fd: number, cb: (code: number) => void): void;
+      flush?(path: string, fd: number, datasync: never, cb: (code: number) => void): void;
 
       /**
        * Called when a file descriptor is being fsync'ed.

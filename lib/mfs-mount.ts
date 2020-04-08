@@ -19,6 +19,8 @@ export function MfsMount(
     create (path, mode, reply) {
       debug("create", { path, mode })
 
+      // todo: ipfs 0.4.22 replies 404?
+      /*
       ipfs.files.touch(path, { flush: true })
         .then(() => ipfs.files.chmod(path, mode, { flush: true }))
         .then(() => reply(0))
@@ -26,35 +28,34 @@ export function MfsMount(
           debug("create failed", { err })
           return reply(Fuse.EREMOTEIO)
         })
+        */
 
-        /*
-      writer.write(path, Buffer.from(''), { offset: 0, length: 0 })
+      ipfs.files.write(path, Buffer.alloc(0), { offset: 0, length: 0, create: true })
         .then(() => reply(0))
         .catch((err) => {
           debug("write failed", { err })
           return reply(Fuse.EREMOTEIO)
         })
-        */
     },
 
     ftruncate (path, fd, size, reply) {
       debug("ftruncate", { path, fd, size })
 
-      // todo: check ipfs truncate support
-      /*
-      if (size === 0) {
-        ipfs.files.write(path, Buffer.from(''), { truncate: true })
-          .then(() => reply(0))
-          .catch((err) => {
-            debug("write failed", { err })
-            return reply(fuse.EREMOTEIO)
-          })
-      } else {
-        // todo: read size bytes then write with truncate true
+      async function getBuffer() {
+        const buffer = Buffer.alloc(size)
+        if (size > 0) {
+          await reader.read(path, buffer, { offset: 0, length: size })
+        }
+        return buffer
       }
-      */
 
-      reply(Fuse.EOPNOTSUPP)
+      getBuffer()
+        .then(buffer => ipfs.files.write(path, buffer, { truncate: true }))
+        .then(() => reply(0))
+        .catch((err) => {
+          debug("truncate failed", { err })
+          return reply(errorToFuseCode(err))
+        })
     },
 
     mkdir (path, mode, reply) {
@@ -75,7 +76,7 @@ export function MfsMount(
 
     open (path, flags, reply) {
       debug("open", { path, flags })
-      reply(0, 42) // todo: real fd
+      reply(0, 0) // todo: real fd
     },
 
     read: (path, fd, buffer, length, offset, cb) => {
@@ -262,16 +263,16 @@ export function MfsMount(
         })
     },
 
-    flush: (path, fd, reply) => {
-      debug("flush", { path })
+    flush (path, fd, datasync, reply) {
+      debug("flush", { path, fd })
 
       writer.flush(path)
         .then(() => reply(0))
-        .catch((err: any) => {
+        .catch(err => {
           debug({ err })
-          reply(Fuse.EREMOTEIO)
+          reply(errorToFuseCode(err))
         })
-    }
+    },
   }
 }
 
@@ -285,7 +286,7 @@ export function MfsReader_Direct(ipfs: IpfsClient): MfsReader {
     async read (path, buffer, segment) {
       let targetOffset = 0
       for await (const chunk of ipfs.files.read(path, segment)) {
-        debug("read chunk", { chunk })
+        debug("read chunk", { length: chunk.length })
         const targetEnd = targetOffset + chunk.length
         if (targetEnd > segment.length) {
           // todo: is this check still necessary?
