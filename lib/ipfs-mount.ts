@@ -16,24 +16,29 @@ export function IpfsMount(
   const firstAccessByPath = new Map<string, Date>()
 
   return {
-    create: (path, mode, reply) => reply(Fuse.EROFS),
-
-    open: (path, flags, reply) => {
-      debug("open " + path)
-      return reply(0, 22)
+    create (path, mode, reply) {
+      debug("create", { path, mode })
+      reply(Fuse.EROFS)
     },
 
-    opendir: (path, flags, reply) => {
-      debug("opendir " + path)
+    open (path, flags, reply) {
+      debug("open", { path, flags })
+      return reply(0, 0)
+    },
+
+    opendir (path, flags, reply) {
+      debug("opendir", { path, flags })
       if (path === "/") return reply(Fuse.EPERM, -1)
       return reply(0, -1)
     },
 
-    //statfs: (path, reply) => {
+    //statfs (path, reply) {
     //  debug("statfs " + path)
     //},
 
-    getattr: (path, cb) => {
+    getattr (path, cb) {
+      debug("getattr", { path })
+
       const reply = (code: number, stats: Fuse.Stats) => {
         debug({ code, stats })
         cb(code, stats)
@@ -82,7 +87,7 @@ export function IpfsMount(
         .catch((err: any) => bail(err, "ipfs files stat"))
     },
 
-    readdir: (path, cb) => {
+    readdir (path, cb) {
       debug("readdir " + path)
 
       const reply = (code: number, files: string[]) => {
@@ -106,8 +111,8 @@ export function IpfsMount(
         .catch((err: any) => bail(err, "ipfs ls"))
     },
 
-    read: (path, fd, buffer, length, offset, cb) => {
-      debug("read " + path, { offset, length })
+    read (path, fd, buffer, length, offset, cb) {
+      debug("read", { path, fd, length, offset })
 
       const reply = (bytesReadOrError: number) => {
         debug({ bytesReadOrError });

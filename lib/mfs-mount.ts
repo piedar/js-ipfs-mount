@@ -79,8 +79,8 @@ export function MfsMount(
       reply(0, 0) // todo: real fd
     },
 
-    read: (path, fd, buffer, length, offset, cb) => {
-      debug("read " + path, { offset, length })
+    read (path, fd, buffer, length, offset, cb) {
+      debug("read", { path, fd, length, offset })
 
       const reply = (bytesReadOrError: number) => {
         debug({ bytesReadOrError });
@@ -208,20 +208,20 @@ export function MfsMount(
         })
     },
 
-    chown: (path: string, uid: number, gid: number, cb: (err: number) => void) => {
-      debug("custom chown " + path, { uid, gid, cb })
+    chown (path: string, uid: number, gid: number, cb: (err: number) => void) {
+      debug("chown" + path, { path, uid, gid })
       debug("fixme: chown does nothing")
       return cb(0)
     },
 
-    chmod: (path: string, mode: any, cb: (err: number) => void) => {
-      debug("custom chmod " + path, { mode, cb })
+    chmod (path: string, mode: any, cb: (err: number) => void) {
+      debug("chmod", { path, mode })
       debug("fixme: chmod does nothing")
       return cb(0)
     },
 
-    getattr: (path: string, reply: (err: number, stats: Fuse.Stats) => void) => {
-      debug("custom getattr " + path)
+    getattr (path: string, reply: (err: number, stats: Fuse.Stats) => void) {
+      debug("getattr", { path })
 
       ipfs.files.stat(path)
         .then(ipfsStat => {
@@ -252,8 +252,8 @@ export function MfsMount(
         })
     },
 
-    write: (path, fd, buf, len, pos, reply) => {
-      debug("write", { path, len, pos })
+    write (path, fd, buf, len, pos, reply) {
+      debug("write", { path, fd, len, pos })
 
       writer.write(path, buf, { offset: pos, length: len })
         .then(() => reply(len))
