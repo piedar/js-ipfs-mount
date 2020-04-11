@@ -46,44 +46,41 @@ export function IpfsMount(
       }
       const bail = (err: any, reason?: any) => {
         debug({ err, reason })
-        reply(errorToFuseCode(err), undefined!)
+        cb(errorToFuseCode(err), undefined!)
       }
 
-      const now = new Date(Date.now())
-      const firstAccess = getOrAdd(firstAccessByPath, path, now)
+      if (path === "/") return bail(Fuse.EPERM)
 
-      let stats = {
-        dev: 0,
-        ino: 0,
-        size: 0,
-        mode: 0,
-        nlink: 0,
-        uid: process.getuid ? process.getuid() : 0,
-        gid: process.getgid ? process.getgid() : 0,
-        rdev: 0,
-        blksize: 0,
-        blocks: 0,
-        ctime: firstAccess,
-        mtime: firstAccess,
-        atime: now,
-      }
-
-      const ipfsPath = path === "/" ? path : join("/ipfs", path)
+      const ipfsPath = join("/ipfs", path)
 
       ipfs.files.stat(ipfsPath)
-        .then(ipfsStat => {
+        .then(async ipfsStat => {
           debug({ ipfsStat })
+
+          const now = new Date(Date.now())
+          const firstAccess = getOrAdd(firstAccessByPath, path, now)
 
           const [filetype, permissions] =
             ipfsStat.type === "directory" ? [fs.constants.S_IFDIR, 0o111] :
             ipfsStat.type === "file"      ? [fs.constants.S_IFREG, 0o444] :
                                             [0, 0o000]
-          stats = Object.assign(stats, {
+
+          const stats = {
+            dev: 0,
+            ino: 0,
             size: ipfsStat.size,
+            mode: filetype | permissions,
             nlink: 1,
-            mode: filetype | permissions
-          })
-          return reply(0, stats as Fuse.Stats)
+            uid: process.getuid ? process.getuid() : 0,
+            gid: process.getgid ? process.getgid() : 0,
+            rdev: 0,
+            blksize: 0,
+            blocks: ipfsStat.blocks,
+            ctime: firstAccess,
+            mtime: firstAccess,
+            atime: now,
+          }
+          return reply(0, stats)
         })
         .catch((err: any) => bail(err, "ipfs files stat"))
     },
