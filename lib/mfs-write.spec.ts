@@ -20,8 +20,8 @@ const testCases = [
     name: "hello",
     expectedBuffer: Buffer.from("hello\n"),
   },
-  fileTest("/usr/portage/distfiles/vlc-3.0.8.tar.xz"),
-  fileTest("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz"),
+  fileTest("/var/cache/distfiles/brotli-1.0.7.tar.gz"),
+  fileTest("/var/cache/distfiles/warzone2100-3.3.0_src.tar.xz"),
 ]
 
 

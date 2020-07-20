@@ -43,8 +43,8 @@ const rawTestCases: TestCase[] = [
     expectedBuffer: Buffer.from("hello\n"),
   },
 
-  shouldMatch("/usr/portage/distfiles/vlc-3.0.8.tar.xz", "/ipfs/QmYhJdZzjVWUM55wG3ZdB2Cduh3opgygdb8SvrVgpZz1qp"),
-  shouldMatch("/usr/portage/distfiles/warzone2100-3.2.3.tar.xz", "/ipfs/Qma9qqDVkh3MtDju7kGXCisposEfzqohvi53NkrKqSmjb2"),
+  shouldMatch("/var/cache/distfiles/brotli-1.0.7.tar.gz", "/ipfs/QmeEgFmqRA6ryJBC6WhvMsazdG2dSqdEfP5BvuhPCdg24y"),
+  shouldMatch("/var/cache/distfiles/warzone2100-3.3.0_src.tar.xz", "/ipfs/QmZaxhnqkd1aNx51d9Y1yoMvnri6tQHdNEN6Zz2neSQUmo"),
   shouldMatch("/usr/share/wesnoth/data/core/music/silence.ogg", "/ipfs/QmXNJ8c1UJsMSza5zGXFp31ZxTiXwDajgA94Qusg7dCPZX"),
   shouldMatch("/usr/share/wesnoth/data/core/music/battle.ogg", "/ipfs/QmQdktw4UY5oVYBuErqiABCSyuMa5qjRF6buFRzaQfUbq4"),
 ]
