@@ -147,3 +147,8 @@ sys     0m0.014s
 ```
 
 Subsequent access should be way faster because `auto_cache` works well with immutable IPFS objects.
+
+
+## Related
+
+* https://github.com/ipfs/roadmap/issues/90
