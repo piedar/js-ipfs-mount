@@ -1,5 +1,6 @@
 import Fuse = require("fuse-native")
-import { IpfsClient, Segment } from "ipfs-api"
+import type { IPFS } from "ipfs-core-types"
+import type { Segment } from "types/ipfs-api"
 const debug = require("debug")("MfsMountable")
 
 import { errorToFuseCode } from "./errors"
@@ -9,7 +10,7 @@ import { gather, map } from "./iterable"
 
 
 export function MfsMount(
-  ipfs: IpfsClient,
+  ipfs: IPFS,
   reader: MfsReader = MfsReader_Direct(ipfs),
   writer: MfsWriter = MfsWriter_Direct(ipfs),
 ): Fuse.Handlers {
@@ -281,7 +282,7 @@ type MfsReader = {
   read: (path: string, buffer: Buffer, segment: Segment) => Promise<Segment>
 }
 
-export function MfsReader_Direct(ipfs: IpfsClient): MfsReader {
+export function MfsReader_Direct(ipfs: IPFS): MfsReader {
   return {
     async read (path, buffer, segment) {
       let targetOffset = 0
@@ -292,7 +293,8 @@ export function MfsReader_Direct(ipfs: IpfsClient): MfsReader {
           // todo: is this check still necessary?
           throw { message: "ipfs.files.read() returned a bad segment", segment, targetEnd }
         }
-        targetOffset += chunk.copy(buffer, targetOffset)
+        buffer.fill(chunk, targetOffset, targetEnd)
+        targetOffset = targetEnd
       }
       return { offset: segment.offset, length: targetOffset }
     }
@@ -305,13 +307,13 @@ type MfsWriter = {
   flush: (path: string) => Promise<void>
 }
 
-export function MfsWriter_Direct(ipfs: IpfsClient): MfsWriter {
+export function MfsWriter_Direct(ipfs: IPFS): MfsWriter {
   return {
     write: (path: string, buffer: Buffer, segment: Segment) => {
       return ipfs.files.write(path, buffer, { ...segment })
     },
-    flush: (path: string) => {
-      return ipfs.files.flush(path)
+    flush: async (path: string) => {
+      await ipfs.files.flush(path)
     }
   }
 }

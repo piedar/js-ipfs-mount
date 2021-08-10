@@ -1,4 +1,5 @@
-import { IpfsClient, Segment } from "ipfs-api"
+import type { IPFS } from "ipfs-core-types"
+import type { Segment } from "types/ipfs-api"
 const debug = require("debug")("IpfsMount")
 
 
@@ -6,7 +7,7 @@ export type IpfsReader = {
   read: (path: string, buffer: Buffer, segment: Segment) => Promise<Segment>
 }
 
-export function IpfsReader_Direct(ipfs: IpfsClient): IpfsReader {
+export function IpfsReader_Direct(ipfs: IPFS): IpfsReader {
   return {
     async read (path, buffer, segment) {
       let targetOffset = 0
@@ -17,7 +18,8 @@ export function IpfsReader_Direct(ipfs: IpfsClient): IpfsReader {
           // todo: is this check still necessary?
           throw { message: "ipfs.cat() returned a bad segment", segment, targetEnd }
         }
-        targetOffset += chunk.copy(buffer, targetOffset)
+        buffer.fill(chunk, targetOffset, targetEnd)
+        targetOffset = targetEnd
       }
       return { offset: segment.offset, length: targetOffset }
     }

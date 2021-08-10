@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import { join } from "path"
 import * as Fuse from "fuse-native"
-import { IpfsClient } from "ipfs-api"
+import type { IPFS } from "ipfs-core-types"
 const debug = require("debug")("IpfsMount")
 
 import { errorToFuseCode } from "./errors"
@@ -10,7 +10,7 @@ import { filter, gather, map } from "./iterable"
 import { IpfsReader, IpfsReader_Direct } from "./ipfs-read"
 
 export function IpfsMount(
-  ipfs: IpfsClient,
+  ipfs: IPFS,
   reader: IpfsReader = IpfsReader_Direct(ipfs),
 ): Fuse.Handlers {
 

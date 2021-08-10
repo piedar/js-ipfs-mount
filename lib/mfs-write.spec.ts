@@ -1,7 +1,7 @@
 import * as fs from "fs"
 import * as path from "path"
 import { Buffer } from "buffer"
-import IpfsHttpClient = require("ipfs-http-client")
+import * as IpfsHttpClient from "ipfs-http-client"
 import { expect } from "chai"
 import { describe, it } from "mocha"
 import { v4 as uuidv4 } from "uuid"
@@ -25,7 +25,7 @@ const testCases = [
 ]
 
 
-const ipfs = IpfsHttpClient()
+const ipfs = IpfsHttpClient.create()
 
 describe(`${MfsReader_Direct.name} + ${MfsWriter_Direct.name}`, () => {
   const reader = MfsReader_Direct(ipfs)

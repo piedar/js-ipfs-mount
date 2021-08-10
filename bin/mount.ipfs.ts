@@ -1,8 +1,8 @@
 #!/usr/bin/env ts-node
 
-import * as command from "commander"
+import { program as command } from "commander"
 import Fuse = require("fuse-native")
-import IpfsHttpClient = require("ipfs-http-client")
+import * as IpfsHttpClient from "ipfs-http-client"
 
 import * as mount from "../lib/mount"
 import { flatten } from "../lib/extensions"
@@ -17,8 +17,6 @@ const optionsDefault = ["auto_cache", "auto_unmount"]
 
 command
   .version(version)
-
-command
   .arguments("[target]")
   .description("mount interplanetary file system")
   .option("--target <dir>", `mount point (default: ${targetDefault})`)
@@ -29,24 +27,21 @@ command
 command.parse(process.argv)
 
 
-const target =
-    command.target ? command.target as string
-  : command.args.length == 1 ? command.args[0]
-  : targetDefault;
+const target = command.opts().target || command.args[0] || targetDefault;
 
 const fuseOptions = parseFuseOptions(flatten(
-  (command.fuseOptions as string[])
+  (command.opts().fuseOptions as string[])
     .map(opt => opt === "defaults" ? optionsDefault : [opt])
 ))
 
 if (!target) {
   console.log("must specify a target")
-  throw command.help()
+  command.help()
 }
 
 
 const ipfsOptions = { }
-const ipfs = IpfsHttpClient(ipfsOptions)
+const ipfs = IpfsHttpClient.create(ipfsOptions)
 const fuse = new Fuse(target, IpfsMount(ipfs), fuseOptions)
 
 mount.untilDone(fuse, done)
