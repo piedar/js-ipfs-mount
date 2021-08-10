@@ -20,8 +20,8 @@ const testCases = [
     name: "hello",
     expectedBuffer: Buffer.from("hello\n"),
   },
-  fileTest("/var/cache/distfiles/brotli-1.0.7.tar.gz"),
-  fileTest("/var/cache/distfiles/warzone2100-3.3.0_src.tar.xz"),
+  fileTest("/var/cache/distfiles/go-ipfs-0.9.1.tar.gz"),
+  fileTest("/var/cache/distfiles/bash-5.1.tar.gz"),
 ]
 
 

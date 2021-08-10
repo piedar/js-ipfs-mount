@@ -43,8 +43,8 @@ const rawTestCases: TestCase[] = [
     expectedBuffer: Buffer.from("hello\n"),
   },
 
-  shouldMatch("/var/cache/distfiles/brotli-1.0.7.tar.gz", "/ipfs/QmeEgFmqRA6ryJBC6WhvMsazdG2dSqdEfP5BvuhPCdg24y"),
-  shouldMatch("/var/cache/distfiles/warzone2100-3.3.0_src.tar.xz", "/ipfs/QmZaxhnqkd1aNx51d9Y1yoMvnri6tQHdNEN6Zz2neSQUmo"),
+  shouldMatch("/var/cache/distfiles/go-ipfs-0.9.1.tar.gz", "/ipfs/QmUVYEkMcw51Fdn6LNsArP1SWZtnd3NCamULTwJAc9cXiH"),
+  shouldMatch("/var/cache/distfiles/bash-5.1.tar.gz", "/ipfs/QmaKCo5bzwPzv373WRNUhkYumPamDKERLSUS9EydSVBgwM"),
   shouldMatch("/usr/share/wesnoth/data/core/music/silence.ogg", "/ipfs/QmXNJ8c1UJsMSza5zGXFp31ZxTiXwDajgA94Qusg7dCPZX"),
   shouldMatch("/usr/share/wesnoth/data/core/music/battle.ogg", "/ipfs/QmQdktw4UY5oVYBuErqiABCSyuMa5qjRF6buFRzaQfUbq4"),
 ]
