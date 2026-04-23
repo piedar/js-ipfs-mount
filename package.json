@@ -31,6 +31,6 @@
     "debug": "^4.3.2",
     "fuse-native": "^2.2.6",
     "ipfs-http-client": "^51.0.1",
-    "uuid": "^8.3.2"
+    "uuid": "^14.0.0"
   }
 }
